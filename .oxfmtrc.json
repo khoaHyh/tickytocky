@@ -1,0 +1,13 @@
+{
+  "ignorePatterns": ["dist", "node_modules", "playwright-report", "test-results"],
+  "printWidth": 120,
+  "proseWrap": "preserve",
+  "semi": false,
+  "sortImports": true,
+  "sortPackageJson": {
+    "sortScripts": true
+  },
+  "sortTailwindcss": {
+    "stylesheet": "./src/styles.css"
+  }
+}
