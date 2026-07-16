@@ -1,5 +1,6 @@
 node_modules/
 dist/
+.asset-build/
 .playwright-cli/
 playwright-report/
 test-results/

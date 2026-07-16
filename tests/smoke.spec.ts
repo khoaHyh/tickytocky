@@ -6,8 +6,13 @@ test("introduces the mechanical watch guide", async ({ page }) => {
     if (message.type() === "error") consoleErrors.push(message.text())
   })
 
+  const modelResponse = page.waitForResponse(
+    (response) => new URL(response.url()).pathname === "/models/watch-model.glb",
+  )
   await page.goto("/")
 
+  expect((await modelResponse).ok()).toBe(true)
+  await expect(page.getByText("Loading movement…")).toBeHidden()
   await expect(page.getByRole("heading", { level: 1, name: "TickyTocky" })).toBeVisible()
   await expect(page.getByText("An interactive guide to mechanical watches.")).toBeVisible()
   await expect(page.getByTestId("watch-scene")).toBeVisible()

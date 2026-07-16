@@ -11,6 +11,7 @@ import {
 const chapters = 5
 const WatchScene = lazy(async () => {
   const scene = await import("./watch-scene")
+  scene.preloadWatchScene()
   return { default: scene.WatchScene }
 })
 
