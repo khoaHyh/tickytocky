@@ -10,5 +10,31 @@ test("introduces the mechanical watch guide", async ({ page }) => {
 
   await expect(page.getByRole("heading", { level: 1, name: "TickyTocky" })).toBeVisible()
   await expect(page.getByText("An interactive guide to mechanical watches.")).toBeVisible()
+  await expect(page.getByTestId("watch-scene")).toBeVisible()
   expect(consoleErrors).toEqual([])
+})
+
+test("scrolling explodes and rebuilds the watch", async ({ page }) => {
+  await page.goto("/")
+
+  const status = page.getByTestId("assembly-status")
+  await expect(status).toHaveText("Watch assembled")
+  await expect(status).toHaveAttribute("data-progress", "0.000")
+
+  await page.evaluate("window.scrollTo(0, document.documentElement.scrollHeight)")
+  await expect(status).toHaveText("Components exploded")
+  await expect(status).toHaveAttribute("data-progress", "1.000")
+  expect(await page.evaluate("document.documentElement.scrollWidth > document.documentElement.clientWidth")).toBe(false)
+
+  await page.evaluate("window.scrollTo(0, 0)")
+  await expect(status).toHaveText("Watch assembled")
+  await expect(status).toHaveAttribute("data-progress", "0.000")
+})
+
+test("reduced motion uses discrete chapter poses", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" })
+  await page.goto("/")
+
+  await page.evaluate("window.scrollTo(0, document.documentElement.scrollHeight * 0.36)")
+  await expect(page.getByTestId("assembly-status")).toHaveAttribute("data-progress", "0.500")
 })

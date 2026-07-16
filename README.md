@@ -4,8 +4,10 @@ An interactive guide to mechanical watches. The project will use scroll-driven
 3D lessons to show how a watch stores energy, regulates time, and moves its
 displays.
 
-The repository currently contains the application foundation. The first 3D
-lesson has not been implemented yet.
+The repository currently contains the application foundation and a graybox 3D
+prototype. Native page scroll deterministically separates and rebuilds a
+simplified watch while semantic HTML explains each functional group. Accurate
+movement geometry and detailed lessons come next.
 
 ## Stack
 
