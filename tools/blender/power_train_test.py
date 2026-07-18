@@ -11,21 +11,16 @@ from pathlib import Path
 import power_train
 
 
-VALID_SPEC = {
-    "arborTurnsAtFullWind": 3,
-    "reserveSecondsAtFullWind": 28_800,
-    "meshes": {
-        "barrelToCenter": {"wheelTeeth": 96, "pinionLeaves": 12},
-        "centerToThird": {"wheelTeeth": 80, "pinionLeaves": 10},
-        "thirdToFourth": {"wheelTeeth": 75, "pinionLeaves": 10},
-        "fourthToEscape": {"wheelTeeth": 96, "pinionLeaves": 6},
-    },
-}
+VALID_SPEC = json.loads(
+    (Path(__file__).resolve().parents[2] / "src/content/power-train.json").read_text(
+        encoding="utf-8"
+    )
+)
 
 
 class PowerTrainTest(unittest.TestCase):
     def test_rejects_invalid_counts(self) -> None:
-        for invalid_count in (True, 96.5, power_train.MAX_SAFE_INTEGER + 1):
+        for invalid_count in (True, -1, 0, 96.5, 2**53):
             with self.subTest(invalid_count=invalid_count):
                 invalid = {**VALID_SPEC, "meshes": dict(VALID_SPEC["meshes"])}
                 invalid["meshes"]["barrelToCenter"] = {
@@ -35,6 +30,18 @@ class PowerTrainTest(unittest.TestCase):
 
                 with self.assertRaisesRegex(ValueError, "positive integer"):
                     self.load(invalid)
+
+    def test_accepts_the_largest_shared_safe_integer(self) -> None:
+        valid = {**VALID_SPEC, "meshes": dict(VALID_SPEC["meshes"])}
+        valid["meshes"]["barrelToCenter"] = {
+            "wheelTeeth": 2**53 - 1,
+            "pinionLeaves": 12,
+        }
+
+        self.assertEqual(
+            self.load(valid).barrel_to_center.wheel_teeth,
+            2**53 - 1,
+        )
 
     def test_layout_uses_matching_pitch_circle_distances(self) -> None:
         spec = self.load(VALID_SPEC)
