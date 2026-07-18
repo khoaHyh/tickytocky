@@ -1,5 +1,7 @@
-import { lazy, Suspense, useEffect, useMemo, useRef } from "react"
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react"
 
+import { EscapementControls } from "./escapement-controls"
+import { createEscapementLesson } from "./escapement-lesson"
 import {
   createStoryProgress,
   describeAssembly,
@@ -20,6 +22,8 @@ export function WatchExperience() {
   const story = useRef<HTMLElement>(null)
   const status = useRef<HTMLOutputElement>(null)
   const progress = useMemo(() => createStoryProgress(), [])
+  const lesson = useMemo(() => createEscapementLesson(), [])
+  const [reducedMotion, setReducedMotion] = useState(false)
 
   useEffect(() => {
     const element = story.current
@@ -54,13 +58,18 @@ export function WatchExperience() {
 
     window.addEventListener("scroll", schedule, { passive: true })
     window.addEventListener("resize", schedule)
-    motion.addEventListener("change", schedule)
-    schedule()
+    const motionChanged = () => {
+      setReducedMotion(motion.matches)
+      schedule()
+    }
+
+    motion.addEventListener("change", motionChanged)
+    motionChanged()
 
     return () => {
       window.removeEventListener("scroll", schedule)
       window.removeEventListener("resize", schedule)
-      motion.removeEventListener("change", schedule)
+      motion.removeEventListener("change", motionChanged)
       if (frame !== undefined) cancelAnimationFrame(frame)
     }
   }, [progress])
@@ -73,7 +82,7 @@ export function WatchExperience() {
         <Suspense
           fallback={<p className="grid h-full place-items-center font-mono text-xs text-muted">Loading movement…</p>}
         >
-          <WatchScene progress={progress} />
+          <WatchScene lesson={lesson} progress={progress} reducedMotion={reducedMotion} />
         </Suspense>
 
         <div aria-hidden="true" className="part-label-layer hidden lg:block">
@@ -143,12 +152,13 @@ export function WatchExperience() {
         </section>
 
         <section className="story-chapter items-start md:items-center">
-          <div className="story-copy ml-auto md:max-w-md">
+          <div className="escapement-story-copy story-copy ml-auto md:max-w-md">
             <p className="story-kicker">03 / Regulation</p>
             <h2 className="story-title">A controlled escape</h2>
             <p className="story-body">
               The escape wheel, pallet fork, and balance turn continuous spring force into a measured sequence of beats.
             </p>
+            <EscapementControls lesson={lesson} reducedMotion={reducedMotion} />
           </div>
         </section>
 

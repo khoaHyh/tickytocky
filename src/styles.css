@@ -69,6 +69,7 @@ body {
   width: min(100%, 34rem);
   padding-left: clamp(1.25rem, 3vw, 2rem);
   border-left: 1px solid color-mix(in srgb, var(--color-line) 76%, transparent);
+  pointer-events: auto;
   text-wrap: balance;
 }
 
@@ -97,6 +98,107 @@ body {
   color: var(--color-muted);
   font-size: clamp(1rem, 1.5vw, 1.125rem);
   line-height: 1.65;
+}
+
+.escapement-controls {
+  width: min(100%, 30rem);
+  margin-top: 1.25rem;
+  padding: 1rem;
+  border: 1px solid color-mix(in srgb, var(--color-line) 72%, transparent);
+  background: color-mix(in srgb, var(--color-canvas) 86%, transparent);
+  box-shadow: 0 1rem 4rem color-mix(in srgb, black 18%, transparent);
+  pointer-events: auto;
+  text-wrap: pretty;
+}
+
+.escapement-phase-heading,
+.escapement-rate {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  color: var(--color-accent);
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.escapement-phase-output {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 0.8rem;
+}
+
+.escapement-phase-output strong {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 600;
+}
+
+.escapement-phase-output span,
+.escapement-motion-note {
+  color: var(--color-muted);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.escapement-control-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+  min-width: 0;
+  margin: 1rem 0 0;
+  padding: 0;
+  border: 0;
+}
+
+.escapement-control-row button,
+.escapement-rate select {
+  min-height: 2.75rem;
+  border: 1px solid color-mix(in srgb, var(--color-line) 80%, transparent);
+  border-radius: 0;
+  color: var(--color-ink);
+  background: color-mix(in srgb, var(--color-canvas) 75%, transparent);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+}
+
+.escapement-control-row button {
+  padding-inline: 0.65rem;
+  cursor: pointer;
+}
+
+.escapement-control-row button:hover:not(:disabled),
+.escapement-control-row button[aria-pressed="true"] {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.escapement-control-row button:focus-visible,
+.escapement-rate select:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+.escapement-control-row button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.escapement-rate {
+  margin-top: 0.75rem;
+  color: var(--color-muted);
+}
+
+.escapement-rate select {
+  min-width: 7.5rem;
+  padding-inline: 0.75rem;
+}
+
+.escapement-motion-note {
+  margin-top: 0.65rem;
 }
 
 .progress-track {
@@ -193,6 +295,15 @@ body {
     border-top: 1px solid color-mix(in srgb, var(--color-line) 76%, transparent);
     border-left: 0;
     background: linear-gradient(to bottom, color-mix(in srgb, var(--color-canvas) 88%, transparent), transparent);
+  }
+
+  .escapement-controls {
+    background: color-mix(in srgb, var(--color-canvas) 95%, transparent);
+  }
+
+  .escapement-story-copy {
+    padding-top: 10rem;
+    background: transparent;
   }
 
   .story-title {

@@ -144,6 +144,294 @@ def add_hand(
     return object_
 
 
+def add_mesh(
+    name: str,
+    *,
+    vertices: list[tuple[float, float, float]],
+    faces: list[tuple[int, ...]],
+    location: tuple[float, float, float],
+    material: bpy.types.Material,
+    root: bpy.types.Object,
+    smooth: bool = False,
+) -> bpy.types.Object:
+    """Add a self-authored mesh while keeping its origin at `location`."""
+    mesh = bpy.data.meshes.new(f"{name}_mesh")
+    mesh.from_pydata(vertices, [], faces)
+    mesh.update()
+    object_ = bpy.data.objects.new(name, mesh)
+    object_.location = location
+    object_.data.materials.append(material)
+    object_.parent = root
+    bpy.context.collection.objects.link(object_)
+    for polygon in object_.data.polygons:
+        polygon.use_smooth = smooth
+    return object_
+
+
+def add_radial_prism(
+    name: str,
+    *,
+    outline: list[tuple[float, float]],
+    depth: float,
+    location: tuple[float, float, float],
+    material: bpy.types.Material,
+    root: bpy.types.Object,
+    center: tuple[float, float] = (0, 0),
+    smooth: bool = False,
+) -> bpy.types.Object:
+    """Extrude a star-shaped radial outline around a mechanical pivot."""
+    half_depth = depth / 2
+    vertex_count = len(outline)
+    vertices = [
+        (x, y, z)
+        for z in (-half_depth, half_depth)
+        for x, y in outline
+    ]
+    bottom_center = len(vertices)
+    vertices.append((center[0], center[1], -half_depth))
+    top_center = len(vertices)
+    vertices.append((center[0], center[1], half_depth))
+    faces: list[tuple[int, ...]] = []
+    for index in range(vertex_count):
+        next_index = (index + 1) % vertex_count
+        faces.extend(
+            [
+                (bottom_center, next_index, index),
+                (top_center, vertex_count + index, vertex_count + next_index),
+                (
+                    index,
+                    next_index,
+                    vertex_count + next_index,
+                    vertex_count + index,
+                ),
+            ]
+        )
+    return add_mesh(
+        name,
+        vertices=vertices,
+        faces=faces,
+        location=location,
+        material=material,
+        root=root,
+        smooth=smooth,
+    )
+
+
+def add_escape_wheel(
+    *,
+    location: tuple[float, float, float],
+    material: bpy.types.Material,
+    root: bpy.types.Object,
+) -> bpy.types.Object:
+    """Add a generic 15-tooth educational escape wheel."""
+    tooth_count = 15
+    sector = math.tau / tooth_count
+    root_radius = 0.0013
+    tip_radius = 0.00205
+    outline = []
+    for tooth in range(tooth_count):
+        angle = tooth * sector
+        for radius, phase in (
+            (root_radius, 0.0),
+            (tip_radius, 0.16),
+            (tip_radius * 0.94, 0.38),
+            (root_radius, 0.68),
+        ):
+            point_angle = angle + sector * phase
+            outline.append(
+                (radius * math.cos(point_angle), radius * math.sin(point_angle))
+            )
+    # Center the odd-tooth bounds so Meshopt quantization retains the wheel axis.
+    x_extent = max(max(x for x, _ in outline), -min(x for x, _ in outline))
+    y_extent = max(max(y for _, y in outline), -min(y for _, y in outline))
+    positive_x = max(x for x, _ in outline)
+    negative_x = -min(x for x, _ in outline)
+    positive_y = max(y for _, y in outline)
+    negative_y = -min(y for _, y in outline)
+    outline = [
+        (
+            x * x_extent / (positive_x if x >= 0 else negative_x),
+            y * y_extent / (positive_y if y >= 0 else negative_y),
+        )
+        for x, y in outline
+    ]
+    return add_radial_prism(
+        "escape_wheel",
+        outline=outline,
+        depth=0.00036,
+        location=location,
+        material=material,
+        root=root,
+    )
+
+
+def add_prism_parts(
+    name: str,
+    *,
+    outlines: list[list[tuple[float, float]]],
+    depth: float,
+    location: tuple[float, float, float],
+    material: bpy.types.Material,
+    root: bpy.types.Object,
+) -> bpy.types.Object:
+    """Combine a few lightweight convex prisms into one semantic mesh."""
+    half_depth = depth / 2
+    vertices: list[tuple[float, float, float]] = []
+    faces: list[tuple[int, ...]] = []
+    for outline in outlines:
+        base = len(vertices)
+        count = len(outline)
+        vertices.extend((x, y, -half_depth) for x, y in outline)
+        vertices.extend((x, y, half_depth) for x, y in outline)
+        faces.append(tuple(base + index for index in reversed(range(count))))
+        faces.append(tuple(base + count + index for index in range(count)))
+        for index in range(count):
+            next_index = (index + 1) % count
+            faces.append(
+                (
+                    base + index,
+                    base + next_index,
+                    base + count + next_index,
+                    base + count + index,
+                )
+            )
+    return add_mesh(
+        name,
+        vertices=vertices,
+        faces=faces,
+        location=location,
+        material=material,
+        root=root,
+    )
+
+
+def rectangle_outline(
+    *,
+    center: tuple[float, float],
+    length: float,
+    width: float,
+    angle: float,
+) -> list[tuple[float, float]]:
+    """Return a counter-clockwise oriented rectangle."""
+    along = (math.cos(angle) * length / 2, math.sin(angle) * length / 2)
+    across = (-math.sin(angle) * width / 2, math.cos(angle) * width / 2)
+    return [
+        (center[0] - along[0] - across[0], center[1] - along[1] - across[1]),
+        (center[0] + along[0] - across[0], center[1] + along[1] - across[1]),
+        (center[0] + along[0] + across[0], center[1] + along[1] + across[1]),
+        (center[0] - along[0] + across[0], center[1] - along[1] + across[1]),
+    ]
+
+
+def add_pallet_fork(
+    *,
+    location: tuple[float, float, float],
+    material: bpy.types.Material,
+    root: bpy.types.Object,
+) -> bpy.types.Object:
+    """Add a fork with horns toward the balance and arms toward the escape wheel."""
+    outlines = [
+        [
+            (-0.00135, -0.00022),
+            (0.00055, -0.00025),
+            (0.00085, -0.00013),
+            (0.00085, 0.00013),
+            (0.00055, 0.00025),
+            (-0.00135, 0.00022),
+        ],
+        [
+            (-0.00265, 0.00032),
+            (-0.00135, 0.00018),
+            (-0.00135, 0.00043),
+            (-0.00265, 0.0006),
+        ],
+        [
+            (-0.00265, -0.0006),
+            (-0.00135, -0.00043),
+            (-0.00135, -0.00018),
+            (-0.00265, -0.00032),
+        ],
+        [
+            (0.00055, 0.00013),
+            (0.00172, 0.00043),
+            (0.00162, 0.00072),
+            (0.00055, 0.00025),
+        ],
+        [
+            (0.00055, -0.00025),
+            (0.00162, -0.00072),
+            (0.00172, -0.00043),
+            (0.00055, -0.00013),
+        ],
+    ]
+    # Keep the pivot at the bounds center through Meshopt quantization.
+    x_center = (
+        min(x for outline in outlines for x, _ in outline)
+        + max(x for outline in outlines for x, _ in outline)
+    ) / 2
+    outlines = [[(x - x_center, y) for x, y in outline] for outline in outlines]
+    return add_prism_parts(
+        "pallet_fork",
+        outlines=outlines,
+        depth=0.00032,
+        location=location,
+        material=material,
+        root=root,
+    )
+
+
+def add_hairspring(
+    *,
+    location: tuple[float, float, float],
+    material: bpy.types.Material,
+    root: bpy.types.Object,
+) -> bpy.types.Object:
+    """Add a lightweight planar Archimedean spiral around the balance pivot."""
+    spiral_segment_count = 60
+    terminal_segment_count = 24
+    turn_count = 2.5
+    inner_radius = 0.00038
+    outer_radius = 0.0027
+    ribbon_width = 0.00009
+    center_points: list[tuple[float, float]] = []
+    for index in range(spiral_segment_count + 1):
+        progress = index / spiral_segment_count
+        center_points.append(
+            (
+                math.tau * turn_count * progress,
+                inner_radius + (outer_radius - inner_radius) * progress,
+            )
+        )
+    terminal_start = math.tau * turn_count
+    center_points.extend(
+        (terminal_start + math.tau * index / terminal_segment_count, outer_radius)
+        for index in range(1, terminal_segment_count + 1)
+    )
+
+    vertices: list[tuple[float, float, float]] = []
+    for angle, radius in center_points:
+        for edge_radius in (radius - ribbon_width / 2, radius + ribbon_width / 2):
+            vertices.append(
+                (
+                    edge_radius * math.cos(angle),
+                    edge_radius * math.sin(angle),
+                    0,
+                )
+            )
+    faces = [
+        (index * 2, index * 2 + 1, index * 2 + 3, index * 2 + 2)
+        for index in range(len(center_points) - 1)
+    ]
+    return add_mesh(
+        "hairspring",
+        vertices=vertices,
+        faces=faces,
+        location=location,
+        material=material,
+        root=root,
+    )
+
+
 def create_watch() -> tuple[bpy.types.Object, ...]:
     """Create the semantic watch parts in their assembled pose."""
     steel = create_material(
@@ -254,22 +542,43 @@ def create_watch() -> tuple[bpy.types.Object, ...]:
             material=brass,
             root=root,
         ),
-        add_cylinder(
-            "escape_wheel",
-            radius=0.0018,
-            depth=0.00036,
+        add_escape_wheel(
             location=(0.0042, -0.0066, -0.00282),
             material=brass,
             root=root,
-            vertices=30,
         ),
-        add_hand(
-            "pallet_fork",
-            length=0.0031,
-            width=0.00058,
-            depth=0.00032,
+        add_pallet_fork(
             location=(0.0009, -0.0068, -0.00292),
-            angle=math.radians(-32),
+            material=steel,
+            root=root,
+        ),
+        add_prism_parts(
+            "entry_pallet_stone",
+            outlines=[
+                rectangle_outline(
+                    center=(0.00166, 0.00057),
+                    length=0.00055,
+                    width=0.00023,
+                    angle=math.radians(13),
+                )
+            ],
+            depth=0.00038,
+            location=(0.0009, -0.0068, -0.00292),
+            material=accent,
+            root=root,
+        ),
+        add_prism_parts(
+            "exit_pallet_stone",
+            outlines=[
+                rectangle_outline(
+                    center=(0.00166, -0.00057),
+                    length=0.00055,
+                    width=0.00023,
+                    angle=math.radians(-13),
+                )
+            ],
+            depth=0.00038,
+            location=(0.0009, -0.0068, -0.00292),
             material=accent,
             root=root,
         ),
@@ -280,6 +589,27 @@ def create_watch() -> tuple[bpy.types.Object, ...]:
             location=(-0.0027, -0.0075, -0.00275),
             material=brass,
             root=root,
+        ),
+        add_hairspring(
+            location=(-0.0027, -0.0075, -0.00275),
+            material=steel,
+            root=root,
+        ),
+        add_radial_prism(
+            "impulse_jewel",
+            outline=[
+                (
+                    0.00016 * math.cos(math.tau * index / 16) + 0.00058,
+                    0.00016 * math.sin(math.tau * index / 16) + 0.00011,
+                )
+                for index in range(16)
+            ],
+            center=(0.00058, 0.00011),
+            depth=0.00034,
+            location=(-0.0027, -0.0075, -0.00275),
+            material=accent,
+            root=root,
+            smooth=True,
         ),
     ]
     return tuple(parts)

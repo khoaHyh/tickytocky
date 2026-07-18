@@ -14,13 +14,33 @@ export type WatchModelPart = Readonly<{
   content: ReactNode
 }>
 
+/** One locally animated mechanism element positioned relative to its assembly group. */
+export type WatchModelLocalPart = Readonly<{
+  content: ReactNode
+  offset: WatchModelPoint
+}>
+
+/** The separately animated pieces inside the balance assembly group. */
+export type WatchModelBalancePart = Readonly<{
+  assembled: WatchModelPoint
+  hairspring: WatchModelLocalPart
+  wheel: WatchModelLocalPart
+}>
+
+/** The separately animated pieces inside the escapement assembly group. */
+export type WatchModelEscapementPart = Readonly<{
+  assembled: WatchModelPoint
+  escapeWheel: WatchModelLocalPart
+  palletFork: WatchModelLocalPart
+}>
+
 /** The movement groups exposed to the watch choreography. */
 export type WatchModelParts = Readonly<{
-  balance: WatchModelPart
+  balance: WatchModelBalancePart
   barrel: WatchModelPart
   case: WatchModelPart
   dial: WatchModelPart
-  escapement: WatchModelPart
+  escapement: WatchModelEscapementPart
   hands: WatchModelPart
   train: WatchModelPart
 }>
@@ -31,10 +51,14 @@ type WatchModelNodes = Readonly<{
   case: Mesh
   center_wheel: Mesh
   dial: Mesh
+  entry_pallet_stone: Mesh
   escape_wheel: Mesh
+  exit_pallet_stone: Mesh
   fourth_wheel: Mesh
   gmt_hand: Mesh
+  hairspring: Mesh
   hour_hand: Mesh
+  impulse_jewel: Mesh
   minute_hand: Mesh
   pallet_fork: Mesh
   third_wheel: Mesh
@@ -56,31 +80,64 @@ export function translateWatchModelAsset(asset: unknown): WatchModelParts {
   const nodes = parseWatchModel(asset)
 
   return {
-    balance: createPart(nodes.balance_wheel, [nodes.balance_wheel]),
+    balance: {
+      assembled: translateMeshPosition(nodes.balance_wheel),
+      hairspring: createLocalPart(nodes.balance_wheel, nodes.balance_wheel, [nodes.hairspring]),
+      wheel: createLocalPart(nodes.balance_wheel, nodes.balance_wheel, [nodes.balance_wheel, nodes.impulse_jewel]),
+    },
     barrel: createPart(nodes.barrel, [nodes.barrel]),
     case: createPart(nodes.case, [nodes.case]),
     dial: createPart(nodes.dial, [nodes.dial]),
-    escapement: createPart(nodes.escape_wheel, [nodes.escape_wheel, nodes.pallet_fork]),
+    escapement: {
+      assembled: translateMeshPosition(nodes.escape_wheel),
+      escapeWheel: createLocalPart(nodes.escape_wheel, nodes.escape_wheel, [nodes.escape_wheel]),
+      palletFork: createLocalPart(nodes.escape_wheel, nodes.pallet_fork, [
+        nodes.pallet_fork,
+        nodes.entry_pallet_stone,
+        nodes.exit_pallet_stone,
+      ]),
+    },
     hands: createPart(nodes.hour_hand, [nodes.hour_hand, nodes.minute_hand, nodes.gmt_hand]),
     train: createPart(nodes.center_wheel, [nodes.center_wheel, nodes.third_wheel, nodes.fourth_wheel]),
   }
 }
 
 function createPart(anchor: Mesh, nodes: readonly Mesh[]): WatchModelPart {
-  const assembled = translatePoint(anchor.position.x, anchor.position.y, anchor.position.z)
+  const assembled = translateMeshPosition(anchor)
 
   return {
     assembled,
-    content: (
-      <group dispose={null} position={[-assembled[0], -assembled[1], -assembled[2]]}>
-        <group dispose={null} rotation={[Math.PI / 2, 0, 0]} scale={watchModelScale}>
-          {nodes.map((node) => (
-            <Clone key={node.uuid} object={node} />
-          ))}
-        </group>
-      </group>
-    ),
+    content: createContent(assembled, nodes),
   }
+}
+
+function createLocalPart(parentAnchor: Mesh, pivot: Mesh, nodes: readonly Mesh[]): WatchModelLocalPart {
+  const parentPosition = translateMeshPosition(parentAnchor)
+  const pivotPosition = translateMeshPosition(pivot)
+  return {
+    content: createContent(pivotPosition, nodes),
+    offset: [
+      pivotPosition[0] - parentPosition[0],
+      pivotPosition[1] - parentPosition[1],
+      pivotPosition[2] - parentPosition[2],
+    ],
+  }
+}
+
+function createContent(anchor: WatchModelPoint, nodes: readonly Mesh[]) {
+  return (
+    <group dispose={null} position={[-anchor[0], -anchor[1], -anchor[2]]}>
+      <group dispose={null} rotation={[Math.PI / 2, 0, 0]} scale={watchModelScale}>
+        {nodes.map((node) => (
+          <Clone key={node.uuid} object={node} />
+        ))}
+      </group>
+    </group>
+  )
+}
+
+function translateMeshPosition(mesh: Mesh): WatchModelPoint {
+  return translatePoint(mesh.position.x, mesh.position.y, mesh.position.z)
 }
 
 function translatePoint(x: number, y: number, z: number): WatchModelPoint {
@@ -98,10 +155,14 @@ function parseWatchModel(asset: unknown): WatchModelNodes {
     case: readMesh(asset.nodes, "case"),
     center_wheel: readMesh(asset.nodes, "center_wheel"),
     dial: readMesh(asset.nodes, "dial"),
+    entry_pallet_stone: readMesh(asset.nodes, "entry_pallet_stone"),
     escape_wheel: readMesh(asset.nodes, "escape_wheel"),
+    exit_pallet_stone: readMesh(asset.nodes, "exit_pallet_stone"),
     fourth_wheel: readMesh(asset.nodes, "fourth_wheel"),
     gmt_hand: readMesh(asset.nodes, "gmt_hand"),
+    hairspring: readMesh(asset.nodes, "hairspring"),
     hour_hand: readMesh(asset.nodes, "hour_hand"),
+    impulse_jewel: readMesh(asset.nodes, "impulse_jewel"),
     minute_hand: readMesh(asset.nodes, "minute_hand"),
     pallet_fork: readMesh(asset.nodes, "pallet_fork"),
     third_wheel: readMesh(asset.nodes, "third_wheel"),

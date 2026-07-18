@@ -13,3 +13,8 @@ dial in the XZ plane, with the face pointing along positive Y and twelve o'clock
 along negative Z. The scene adapter owns the one-time rotation into TickyTocky's
 XY watch-face plane. Every moving object is named for its watch-domain concept
 and has its origin on its mechanical pivot.
+
+The escapement slice is intentionally generic educational geometry rather than
+an NH34-dimensional reproduction. It includes a self-authored 15-tooth escape
+wheel, fork and separately identifiable pallet stones, plus a lightweight
+hairspring and impulse jewel at the balance assembly.

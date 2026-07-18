@@ -10,6 +10,21 @@ The current model is an illustrative pipeline tracer. Its dimensions and forms
 have not yet been validated against a physical NH34 movement and must not be
 described as an exact 4R34 or NH34 reproduction.
 
+The escape wheel teeth, pallet fork, pallet stones, hairspring, and impulse
+jewel are independently authored, generic educational forms. They communicate
+the relationships between escapement parts without claiming production
+dimensions or reproducing third-party geometry or artwork.
+
+## Validated toolchain
+
+- Blender 4.5.9 LTS
+- glTF Transform 4.4.1 with Meshopt compression
+- Optimized asset SHA-256: `080efb0a09e1d2fc389fc4407826479f41fb76ac8e52b6b2194d5fc98aac7b68`
+
+Two consecutive builds with this toolchain produced the same bytes. Other
+Blender patch versions may export different bytes and should be accepted only
+after the semantic-node, build, and browser checks pass.
+
 ## Permitted modeling references
 
 Future geometry may use factual dimensions, part names, and mechanical behavior

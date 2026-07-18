@@ -4,10 +4,12 @@ An interactive guide to mechanical watches. The project will use scroll-driven
 3D lessons to show how a watch stores energy, regulates time, and moves its
 displays.
 
-The repository currently contains the application foundation and a graybox 3D
-prototype. Native page scroll deterministically separates and rebuilds a
-simplified watch while semantic HTML explains each functional group. Accurate
-movement geometry and detailed lessons come next.
+The repository contains a self-authored, semantically named GLB watch model.
+Native page scroll deterministically separates and rebuilds the watch while
+semantic HTML explains each functional group. The regulation chapter includes a
+controllable generic Swiss lever lesson for lock, unlock, impulse, and drop.
+
+The current geometry is an educational tracer, not an exact NH34 reproduction.
 
 ## Stack
 
@@ -33,6 +35,21 @@ pnpm dev
 ```
 
 Open `http://localhost:5173`.
+
+## Watch model
+
+The model is generated from a text-based Blender script and optimized with
+Meshopt compression:
+
+```sh
+pnpm asset:watch
+```
+
+Regenerating the asset requires Blender 4.5 LTS on `PATH`, at the standard macOS
+application path, or supplied through `BLENDER_BIN`. The current artifact was
+validated with Blender 4.5.9 LTS; another patch may produce different bytes and
+should be checked through the same model and browser validation. Modeling sources
+and rights are recorded in `public/models/PROVENANCE.md`.
 
 ## Verification
 
