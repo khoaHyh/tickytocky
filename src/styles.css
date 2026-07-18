@@ -2,6 +2,7 @@
 
 @theme {
   --color-accent: #bd4e3a;
+  --color-accent-text: #d86650;
   --color-canvas: #171714;
   --color-ink: #eee9de;
   --color-line: #4b4a43;
@@ -117,7 +118,7 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  color: var(--color-accent);
+  color: var(--color-accent-text);
   font-family: var(--font-mono);
   font-size: 0.625rem;
   letter-spacing: 0.14em;
@@ -173,7 +174,7 @@ body {
 .escapement-control-row button:hover:not(:disabled),
 .escapement-control-row button[aria-pressed="true"] {
   border-color: var(--color-accent);
-  color: var(--color-accent);
+  color: var(--color-accent-text);
 }
 
 .escapement-control-row button:focus-visible,

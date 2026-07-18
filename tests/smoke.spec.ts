@@ -43,3 +43,18 @@ test("reduced motion uses discrete chapter poses", async ({ page }) => {
   await page.evaluate("window.scrollTo(0, document.documentElement.scrollHeight * 0.36)")
   await expect(page.getByTestId("assembly-status")).toHaveAttribute("data-progress", "0.500")
 })
+
+test("reduced motion keeps manual escapement stepping available", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" })
+  await page.goto("/")
+
+  const controls = page.getByTestId("escapement-controls")
+  await expect(controls.getByRole("button", { name: "Play cycle" })).toBeDisabled()
+  await expect(controls.locator("output strong")).toHaveText("Entry lock")
+
+  await controls.getByRole("button", { name: "Next" }).focus()
+  await page.keyboard.press("Enter")
+
+  await expect(controls.locator("output strong")).toHaveText("Entry unlock")
+  await expect(controls.locator("output")).toContainText("Phase 2 of 8")
+})

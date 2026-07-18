@@ -1,7 +1,8 @@
 import { useEffect, useSyncExternalStore, type ChangeEvent } from "react"
 
+import { escapementPhaseGuides } from "../content/escapement"
 import type { EscapementLesson, EscapementPlaybackRate } from "./escapement-lesson"
-import { escapementPhaseGuides, escapementPhaseStops } from "./escapement-mechanics"
+import { escapementPhaseStops } from "./escapement-mechanics"
 
 /** Renders accessible, low-frequency controls for exploring one escapement cycle. */
 export function EscapementControls(props: { lesson: EscapementLesson; reducedMotion: boolean }) {

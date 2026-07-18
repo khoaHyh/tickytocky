@@ -10,9 +10,9 @@ type PartID = keyof WatchModelParts
 type PartDefinition = {
   id: PartID
   exploded: WatchModelPoint
-  focus?: WatchModelPoint
+  focus: WatchModelPoint
   mobileExploded: WatchModelPoint
-  mobileFocus?: WatchModelPoint
+  mobileFocus: WatchModelPoint
   range: readonly [number, number]
 }
 
@@ -260,12 +260,12 @@ function AnimatedPart(props: {
       MathUtils.lerp(props.assembled[2], exploded[2], progress),
     ]
     const focusTarget = props.compact ? props.part.mobileFocus : props.part.focus
-    const focus = focusTarget ? lessonFocus(storyProgress) : 0
+    const focus = lessonFocus(storyProgress)
     const focusScale = isLessonPart(props.part.id) ? 1 : 1 - focus
     target.position.set(
-      MathUtils.lerp(base[0], focusTarget?.[0] ?? base[0], focus),
-      MathUtils.lerp(base[1], focusTarget?.[1] ?? base[1], focus),
-      MathUtils.lerp(base[2], focusTarget?.[2] ?? base[2], focus),
+      MathUtils.lerp(base[0], focusTarget[0], focus),
+      MathUtils.lerp(base[1], focusTarget[1], focus),
+      MathUtils.lerp(base[2], focusTarget[2], focus),
     )
     target.scale.setScalar(Math.max(0.001, focusScale))
   })

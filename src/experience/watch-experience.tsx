@@ -98,7 +98,7 @@ export function WatchExperience() {
           <span className="progress-track">
             <span className="progress-fill" />
           </span>
-          <span className="flex h-24 flex-col justify-between font-mono text-[0.625rem] text-accent">
+          <span className="flex h-24 flex-col justify-between font-mono text-[0.625rem] text-accent-text">
             <span>01</span>
             <span>05</span>
           </span>
@@ -126,7 +126,9 @@ export function WatchExperience() {
             <p className="mt-6 max-w-md text-lg leading-7 text-muted sm:text-xl">
               An interactive guide to mechanical watches.
             </p>
-            <p className="mt-10 font-mono text-xs tracking-[0.16em] text-accent uppercase">Scroll to disassemble</p>
+            <p className="mt-10 font-mono text-xs tracking-[0.16em] text-accent-text uppercase">
+              Scroll to disassemble
+            </p>
           </div>
         </section>
 
@@ -169,7 +171,9 @@ export function WatchExperience() {
             <p className="story-body">
               Each group has a distinct role. Together they form a compact chain from stored energy to displayed time.
             </p>
-            <p className="mt-8 font-mono text-xs tracking-[0.16em] text-accent uppercase">Scroll back to rebuild</p>
+            <p className="mt-8 font-mono text-xs tracking-[0.16em] text-accent-text uppercase">
+              Scroll back to rebuild
+            </p>
           </div>
         </section>
       </div>
