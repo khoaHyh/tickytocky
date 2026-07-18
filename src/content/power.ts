@@ -14,7 +14,7 @@ export const powerStatusGuides: Readonly<Record<PowerLessonStatus, PowerStatusGu
     label: "Train paused",
   },
   running: {
-    description: "Every meshing pair reverses direction while downstream arbors turn faster.",
+    description: "Each visible mesh reverses direction while downstream arbors turn faster.",
     label: "Train running",
   },
   unwound: {

@@ -68,6 +68,9 @@ describe("watch model asset", () => {
       const centerDistance = Math.hypot(wheelPosition.x - pinionPosition.x, wheelPosition.z - pinionPosition.z)
       const tipRadiusSum = faceRadius(wheel) + faceRadius(pinion)
 
+      expect(centerDistance, `${wheelName} must not overlap ${pinionName} excessively`).toBeGreaterThan(
+        tipRadiusSum * 0.9,
+      )
       expect(centerDistance, `${wheelName} must reach ${pinionName}`).toBeLessThan(tipRadiusSum)
     }
   })

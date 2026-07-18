@@ -1,8 +1,8 @@
-import powerTrain from "../content/power-train.json"
+import { powerTrain, powerTrainRatio } from "../content/power-train-contract"
 
-const barrelToCenterRatio = ratio(powerTrain.meshes.barrelToCenter)
-const centerToThirdRatio = ratio(powerTrain.meshes.centerToThird)
-const thirdToFourthRatio = ratio(powerTrain.meshes.thirdToFourth)
+const barrelToCenterRatio = powerTrainRatio(powerTrain.meshes.barrelToCenter)
+const centerToThirdRatio = powerTrainRatio(powerTrain.meshes.centerToThird)
+const thirdToFourthRatio = powerTrainRatio(powerTrain.meshes.thirdToFourth)
 
 /** Inputs to the generic, ratio-derived power-train model. */
 export type PowerTrainInput = Readonly<{
@@ -30,7 +30,8 @@ export type PowerTrainSample = Readonly<{
  * Samples the generic 8-hour worked ratio example used by the lesson.
  *
  * Time may be played faster for study, but the returned rotations preserve the
- * illustrative 8:1, 8:1, and 7.5:1 barrel-to-fourth relationships.
+ * illustrative 8:1, 8:1, and 7.5:1 barrel-to-fourth relationships. The Power
+ * lesson stops at the fourth wheel; the Regulation lesson owns the escape arbor.
  *
  * @throws {RangeError} When either numeric input is not finite.
  */
@@ -58,10 +59,6 @@ export function samplePowerTrain(input: PowerTrainInput): PowerTrainSample {
       thirdTurns,
     },
   }
-}
-
-function ratio(mesh: { pinionLeaves: number; wheelTeeth: number }) {
-  return mesh.wheelTeeth / mesh.pinionLeaves
 }
 
 function clamp(value: number) {

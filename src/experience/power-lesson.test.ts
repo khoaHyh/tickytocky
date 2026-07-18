@@ -1,10 +1,13 @@
-import { expect, test, vi } from "vitest"
+import { expect, test } from "vitest"
 
 import { createPowerLesson } from "./power-lesson"
 
 test("synchronizes playback before advancing and detaches its renderer", () => {
   const lesson = createPowerLesson()
-  const render = vi.fn<() => void>()
+  let renderCount = 0
+  const render = () => {
+    renderCount += 1
+  }
   const detach = lesson.attachRenderer(render)
   lesson.wind()
   const wound = lesson.read()
@@ -16,10 +19,10 @@ test("synchronizes playback before advancing and detaches its renderer", () => {
   expect(lesson.tick(0.1)).not.toEqual(wound)
 
   lesson.togglePlayback()
-  const renderCount = render.mock.calls.length
+  const countBeforeDetach = renderCount
   detach()
   lesson.step()
 
-  expect(render).toHaveBeenCalledTimes(renderCount)
+  expect(renderCount).toBe(countBeforeDetach)
   expect(lesson.getSnapshot().status).toBe("paused")
 })
