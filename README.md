@@ -25,6 +25,7 @@ The current geometry is an educational tracer, not an exact NH34 reproduction.
 
 - Node.js 24
 - Corepack
+- Python 3.11 or newer
 
 ## Local development
 

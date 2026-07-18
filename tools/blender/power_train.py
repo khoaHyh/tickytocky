@@ -9,6 +9,7 @@ from pathlib import Path
 
 
 PINION_ROOT_RATIO = 0.58
+MAX_SAFE_INTEGER = 2**53 - 1
 BARREL_TIP_RADIUS = 0.0042
 BARREL_ROOT_RADIUS = 0.00388
 CENTER_TIP_RADIUS = 0.00315
@@ -177,7 +178,11 @@ def read_record(value: object, name: str) -> dict[str, object]:
 
 def positive_integer(value: object, name: str) -> int:
     """Parse a positive JSON integer without accepting booleans or truncation."""
-    if isinstance(value, int) and not isinstance(value, bool) and value > 0:
+    if (
+        isinstance(value, int)
+        and not isinstance(value, bool)
+        and 0 < value <= MAX_SAFE_INTEGER
+    ):
         return value
     raise ValueError(f'Power-train constant "{name}" must be a positive integer.')
 

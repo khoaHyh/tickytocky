@@ -8,6 +8,7 @@ test("rejects malformed power-train constants at the JSON boundary", () => {
     null,
     { ...validPowerTrain, arborTurnsAtFullWind: true },
     { ...validPowerTrain, reserveSecondsAtFullWind: 0 },
+    { ...validPowerTrain, reserveSecondsAtFullWind: Number.MAX_SAFE_INTEGER + 1 },
     {
       ...validPowerTrain,
       meshes: {

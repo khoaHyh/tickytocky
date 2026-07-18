@@ -48,6 +48,6 @@ function isRecord(value: unknown): value is Readonly<Record<string, unknown>> {
 }
 
 function positiveInteger(value: unknown, name: string) {
-  if (typeof value === "number" && Number.isInteger(value) && value > 0) return value
+  if (typeof value === "number" && Number.isSafeInteger(value) && value > 0) return value
   throw new RangeError(`Power-train constant "${name}" must be a positive integer.`)
 }
