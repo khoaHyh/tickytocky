@@ -13,6 +13,8 @@ import {
   reduceMotion,
   stageStoryProgress,
 } from "./story-progress"
+import { SystemControls } from "./system-controls"
+import { createSystemLesson } from "./system-lesson"
 
 const chapters = 5
 const WatchScene = lazy(async () => {
@@ -29,6 +31,10 @@ export function WatchExperience() {
   const displayLesson = useMemo(() => createDisplayLesson(), [])
   const lesson = useMemo(() => createEscapementLesson(), [])
   const powerLesson = useMemo(() => createPowerLesson(), [])
+  const systemLesson = useMemo(
+    () => createSystemLesson({ displayLesson, escapementLesson: lesson, powerLesson }),
+    [displayLesson, lesson, powerLesson],
+  )
   const [reducedMotion, setReducedMotion] = useState(false)
 
   useEffect(() => {
@@ -94,6 +100,7 @@ export function WatchExperience() {
             powerLesson={powerLesson}
             progress={progress}
             reducedMotion={reducedMotion}
+            systemLesson={systemLesson}
           />
         </Suspense>
 
@@ -179,15 +186,13 @@ export function WatchExperience() {
         </section>
 
         <section className="story-chapter items-end md:items-center">
-          <div className="story-copy mr-auto md:max-w-md">
+          <div className="lesson-story-copy story-copy mr-auto md:max-w-md">
             <p className="story-kicker">04 / Assembly</p>
             <h2 className="story-title">One system, many jobs</h2>
             <p className="story-body">
               Each group has a distinct role. Together they form a compact chain from stored energy to displayed time.
             </p>
-            <p className="mt-8 font-mono text-xs tracking-[0.16em] text-accent-text uppercase">
-              Scroll back to rebuild
-            </p>
+            <SystemControls lesson={systemLesson} reducedMotion={reducedMotion} />
           </div>
         </section>
       </div>

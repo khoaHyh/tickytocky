@@ -6,6 +6,7 @@ import type { DisplayLesson } from "./display-lesson"
 import type { EscapementLesson } from "./escapement-lesson"
 import type { PowerLesson } from "./power-lesson"
 import type { StoryProgress } from "./story-progress"
+import type { SystemLesson } from "./system-lesson"
 import { preloadWatchModel, WatchModel, type WatchModelParts, type WatchModelPoint } from "./watch-model"
 
 type PartID = keyof WatchModelParts
@@ -109,6 +110,7 @@ export function WatchScene(props: {
   powerLesson: PowerLesson
   progress: StoryProgress
   reducedMotion: boolean
+  systemLesson: SystemLesson
 }) {
   return (
     <figure aria-label="Exploded mechanical watch model" className="absolute inset-0 z-0" data-testid="watch-scene">
@@ -126,6 +128,7 @@ export function WatchScene(props: {
           powerLesson={props.powerLesson}
           progress={props.progress}
           reducedMotion={props.reducedMotion}
+          systemLesson={props.systemLesson}
         />
       </Canvas>
       <figcaption className="sr-only">
@@ -146,6 +149,7 @@ function Scene(props: {
   powerLesson: PowerLesson
   progress: StoryProgress
   reducedMotion: boolean
+  systemLesson: SystemLesson
 }) {
   const assembly = useRef<Group>(null)
   const escapeWheel = useRef<Group>(null)
@@ -167,6 +171,7 @@ function Scene(props: {
   useEffect(() => props.displayLesson.attachRenderer(invalidate), [invalidate, props.displayLesson])
   useEffect(() => props.lesson.attachRenderer(invalidate), [invalidate, props.lesson])
   useEffect(() => props.powerLesson.attachRenderer(invalidate), [invalidate, props.powerLesson])
+  useEffect(() => props.systemLesson.attachRenderer(invalidate), [invalidate, props.systemLesson])
   useEffect(() => invalidate(), [invalidate, props.reducedMotion, width])
 
   useFrame(({ camera }, deltaSeconds) => {
@@ -191,56 +196,86 @@ function Scene(props: {
     const mechanism = props.reducedMotion ? props.lesson.read() : props.lesson.tick(deltaSeconds)
     const power = props.reducedMotion ? props.powerLesson.read() : props.powerLesson.tick(deltaSeconds)
     const display = props.reducedMotion ? props.displayLesson.read() : props.displayLesson.tick(deltaSeconds)
+    const systemBlend = partProgress(progress, [0.82, 0.94])
+    const system = props.reducedMotion ? props.systemLesson.read() : props.systemLesson.tick(deltaSeconds)
     const focus = lessonFocus(progress)
     const mechanismScale = 1 + focus.regulation * (compact ? 1.35 : 0.55)
     if (escapeWheel.current) {
-      escapeWheel.current.rotation.z = -mechanism.pose.escapeWheelAdvance * escapeWheelToothPitch
+      const advance = MathUtils.lerp(
+        mechanism.pose.escapeWheelAdvance,
+        system.regulation.pose.escapeWheelAdvance,
+        systemBlend,
+      )
+      escapeWheel.current.rotation.z = -advance * escapeWheelToothPitch
       escapeWheel.current.scale.setScalar(mechanismScale)
     }
     if (palletFork.current) {
-      palletFork.current.rotation.z = mechanism.pose.palletPosition * palletBankAngle
+      const position = MathUtils.lerp(mechanism.pose.palletPosition, system.regulation.pose.palletPosition, systemBlend)
+      palletFork.current.rotation.z = position * palletBankAngle
       palletFork.current.scale.setScalar(mechanismScale)
     }
     if (balance.current) {
-      balance.current.rotation.z = mechanism.pose.balancePosition * balanceAmplitude
+      const position = MathUtils.lerp(
+        mechanism.pose.balancePosition,
+        system.regulation.pose.balancePosition,
+        systemBlend,
+      )
+      balance.current.rotation.z = position * balanceAmplitude
       balance.current.scale.setScalar(mechanismScale)
     }
     if (hairspring.current) {
-      const breathing = 1 - mechanism.pose.hairspringWind * 0.08
+      const wind = MathUtils.lerp(mechanism.pose.hairspringWind, system.regulation.pose.hairspringWind, systemBlend)
+      const breathing = 1 - wind * 0.08
       hairspring.current.scale.set(breathing * mechanismScale, breathing * mechanismScale, mechanismScale)
     }
 
     if (barrelDrum.current) {
-      barrelDrum.current.rotation.z = turnsToRadians(power.pose.barrelTurns)
+      barrelDrum.current.rotation.z = turnsToRadians(
+        MathUtils.lerp(power.pose.barrelTurns, system.power.pose.barrelTurns, systemBlend),
+      )
     }
     if (barrelArbor.current) {
-      barrelArbor.current.rotation.z = turnsToRadians(power.pose.barrelArborTurns)
+      barrelArbor.current.rotation.z = turnsToRadians(
+        MathUtils.lerp(power.pose.barrelArborTurns, system.power.pose.barrelArborTurns, systemBlend),
+      )
     }
     if (mainspring.current) {
-      const springScale = 1.15 - power.pose.mainspringWind * 0.25
+      const springWind = MathUtils.lerp(power.pose.mainspringWind, system.power.pose.mainspringWind, systemBlend)
+      const springScale = 1.15 - springWind * 0.25
       mainspring.current.scale.set(springScale, springScale, 1)
     }
     if (centerWheel.current) {
-      centerWheel.current.rotation.z = turnsToRadians(power.pose.centerTurns)
+      centerWheel.current.rotation.z = turnsToRadians(
+        MathUtils.lerp(power.pose.centerTurns, system.power.pose.centerTurns, systemBlend),
+      )
     }
     if (thirdWheel.current) {
-      thirdWheel.current.rotation.z = turnsToRadians(power.pose.thirdTurns)
+      thirdWheel.current.rotation.z = turnsToRadians(
+        MathUtils.lerp(power.pose.thirdTurns, system.power.pose.thirdTurns, systemBlend),
+      )
     }
     if (fourthWheel.current) {
-      fourthWheel.current.rotation.z = turnsToRadians(power.pose.fourthTurns)
+      fourthWheel.current.rotation.z = turnsToRadians(
+        MathUtils.lerp(power.pose.fourthTurns, system.power.pose.fourthTurns, systemBlend),
+      )
     }
     if (hourHand.current) {
-      hourHand.current.rotation.z = -turnsToRadians(display.pose.hourTurns)
+      hourHand.current.rotation.z = -turnsToRadians(
+        MathUtils.lerp(display.pose.hourTurns, system.display.pose.hourTurns, systemBlend),
+      )
     }
     if (minuteHand.current) {
-      minuteHand.current.rotation.z = -turnsToRadians(display.pose.minuteTurns)
+      minuteHand.current.rotation.z = -turnsToRadians(
+        MathUtils.lerp(display.pose.minuteTurns, system.display.pose.minuteTurns, systemBlend),
+      )
     }
 
     if (
       !props.reducedMotion &&
       (props.displayLesson.getSnapshot().playing ||
         props.lesson.getSnapshot().playing ||
-        props.powerLesson.getSnapshot().playing)
+        props.powerLesson.getSnapshot().playing ||
+        props.systemLesson.getSnapshot().playing)
     )
       invalidate()
   })

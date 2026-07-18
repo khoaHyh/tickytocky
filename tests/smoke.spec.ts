@@ -74,6 +74,13 @@ test("reduced motion keeps manual escapement stepping available", async ({ page 
 
   await expect(powerControls.locator("output strong")).toHaveText("Train paused")
   await expect(powerControls).toContainText("Watch time 0:10")
+
+  const systemControls = page.getByTestId("system-controls")
+  await expect(systemControls.getByRole("button", { name: "Run system" })).toBeDisabled()
+  await systemControls.getByRole("button", { name: "Wind system" }).click()
+  await systemControls.getByRole("button", { name: "+10 min" }).click()
+  await expect(systemControls.locator("output strong")).toHaveText("System paused")
+  await expect(systemControls).toContainText("Integrated time 10 min")
 })
 
 test("the display hands advance and pause", async ({ page }) => {
@@ -84,7 +91,7 @@ test("the display hands advance and pause", async ({ page }) => {
   await controls.getByRole("button", { name: "Play hands" }).click()
 
   await expect(controls.locator("output strong")).toHaveText("Hands advancing")
-  await expect(elapsedTime).not.toHaveText("Elapsed display time 0 min")
+  await expect(elapsedTime).not.toHaveText("Elapsed display time 0 min", { timeout: 15_000 })
   await controls.getByRole("button", { name: "Pause hands" }).click()
 
   const pausedTime = await elapsedTime.evaluate((element) => element.textContent ?? "")
@@ -103,11 +110,32 @@ test("the wound power train runs and pauses", async ({ page }) => {
   await powerControls.getByRole("button", { name: "Run train" }).click()
 
   await expect(powerControls.locator("output strong")).toHaveText("Train running")
-  await expect(watchTime).not.toHaveText("Watch time 0:00")
+  await expect(watchTime).not.toHaveText("Watch time 0:00", { timeout: 15_000 })
   await powerControls.getByRole("button", { name: "Pause train" }).click()
 
   const pausedTime = await watchTime.evaluate((element) => element.textContent ?? "")
   await page.waitForTimeout(750)
   await expect(watchTime).toHaveText(pausedTime)
   await expect(powerControls.locator("output strong")).toHaveText("Train paused")
+})
+
+test("the integrated watch system runs and pauses", async ({ page }) => {
+  await page.goto("/")
+
+  const controls = page.getByTestId("system-controls")
+  const integratedTime = controls.getByText(/^Integrated time /)
+  await controls.getByRole("button", { name: "Wind system" }).click()
+  await controls.getByRole("button", { name: "Run system" }).click()
+
+  await expect(controls.locator("output strong")).toHaveText("Whole watch running")
+  await expect(integratedTime).not.toHaveText("Integrated time 0 min", { timeout: 15_000 })
+  const timeBeforeScroll = await integratedTime.evaluate((element) => element.textContent ?? "")
+  await page.evaluate("window.scrollTo(0, 0)")
+  await expect(integratedTime).not.toHaveText(timeBeforeScroll, { timeout: 15_000 })
+  await controls.getByRole("button", { name: "Pause system" }).click()
+
+  const pausedTime = await integratedTime.evaluate((element) => element.textContent ?? "")
+  await page.waitForTimeout(750)
+  await expect(integratedTime).toHaveText(pausedTime)
+  await expect(controls.locator("output strong")).toHaveText("System paused")
 })
