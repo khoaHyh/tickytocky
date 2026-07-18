@@ -34,6 +34,9 @@ describe("watch model asset", () => {
     expect(model.case.assembled[0]).toBeCloseTo(0)
     expect(model.case.assembled[1]).toBeCloseTo(0)
     expect(model.case.assembled[2]).toBeCloseTo(0.24)
+    expect(model.hands.hourHand.offset.slice(0, 2)).toEqual([0, 0])
+    expect(model.hands.minuteHand.offset.slice(0, 2)).toEqual([0, 0])
+    expect(model.hands.gmtHand.offset.slice(0, 2)).toEqual([0, 0])
     expect(Object.values(model).every((part) => part.assembled.every(Number.isFinite))).toBe(true)
   })
 

@@ -334,6 +334,10 @@ body {
     background: transparent;
   }
 
+  .display-story-copy {
+    padding-top: 11rem;
+  }
+
   .story-title {
     font-size: clamp(2.75rem, 14vw, 4.5rem);
   }

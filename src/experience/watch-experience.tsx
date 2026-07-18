@@ -1,5 +1,7 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react"
 
+import { DisplayControls } from "./display-controls"
+import { createDisplayLesson } from "./display-lesson"
 import { EscapementControls } from "./escapement-controls"
 import { createEscapementLesson } from "./escapement-lesson"
 import { PowerControls } from "./power-controls"
@@ -24,6 +26,7 @@ export function WatchExperience() {
   const story = useRef<HTMLElement>(null)
   const status = useRef<HTMLOutputElement>(null)
   const progress = useMemo(() => createStoryProgress(), [])
+  const displayLesson = useMemo(() => createDisplayLesson(), [])
   const lesson = useMemo(() => createEscapementLesson(), [])
   const powerLesson = useMemo(() => createPowerLesson(), [])
   const [reducedMotion, setReducedMotion] = useState(false)
@@ -85,7 +88,13 @@ export function WatchExperience() {
         <Suspense
           fallback={<p className="grid h-full place-items-center font-mono text-xs text-muted">Loading movement…</p>}
         >
-          <WatchScene lesson={lesson} powerLesson={powerLesson} progress={progress} reducedMotion={reducedMotion} />
+          <WatchScene
+            displayLesson={displayLesson}
+            lesson={lesson}
+            powerLesson={powerLesson}
+            progress={progress}
+            reducedMotion={reducedMotion}
+          />
         </Suspense>
 
         <div aria-hidden="true" className="part-label-layer hidden lg:block">
@@ -136,13 +145,14 @@ export function WatchExperience() {
         </section>
 
         <section className="story-chapter items-start md:items-center">
-          <div className="story-copy ml-auto md:max-w-md">
+          <div className="display-story-copy lesson-story-copy story-copy ml-auto md:max-w-md">
             <p className="story-kicker">01 / Display</p>
-            <h2 className="story-title">Beneath the dial</h2>
+            <h2 className="story-title">Motion made readable</h2>
             <p className="story-body">
-              The case, dial, and hands make time readable. Moving them aside exposes the machine that keeps them
-              moving.
+              The minute and hour hands turn at a 12:1 ratio, translating the movement's internal motion into elapsed
+              time you can read.
             </p>
+            <DisplayControls lesson={displayLesson} reducedMotion={reducedMotion} />
           </div>
         </section>
 

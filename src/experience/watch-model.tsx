@@ -42,6 +42,14 @@ export type WatchModelEscapementPart = Readonly<{
   palletFork: WatchModelLocalPart
 }>
 
+/** The independently rotating hands inside the display assembly. */
+export type WatchModelHandsPart = Readonly<{
+  assembled: WatchModelPoint
+  gmtHand: WatchModelLocalPart
+  hourHand: WatchModelLocalPart
+  minuteHand: WatchModelLocalPart
+}>
+
 /** The rigid wheel-and-pinion pairs inside the going-train assembly. */
 export type WatchModelTrainPart = Readonly<{
   assembled: WatchModelPoint
@@ -57,7 +65,7 @@ export type WatchModelParts = Readonly<{
   case: WatchModelPart
   dial: WatchModelPart
   escapement: WatchModelEscapementPart
-  hands: WatchModelPart
+  hands: WatchModelHandsPart
   train: WatchModelTrainPart
 }>
 
@@ -100,6 +108,7 @@ export function preloadWatchModel() {
 /** Parses a loaded GLB and translates it into the scene's semantic watch-part contract. */
 export function translateWatchModelAsset(asset: unknown): WatchModelParts {
   const nodes = parseWatchModel(asset)
+  const displayAnchor = displayHandPivot(nodes.dial, nodes.hour_hand)
 
   return {
     balance: {
@@ -124,7 +133,14 @@ export function translateWatchModelAsset(asset: unknown): WatchModelParts {
         nodes.exit_pallet_stone,
       ]),
     },
-    hands: createPart(nodes.hour_hand, [nodes.hour_hand, nodes.minute_hand, nodes.gmt_hand]),
+    hands: {
+      assembled: displayAnchor,
+      gmtHand: createLocalPartAt(displayAnchor, displayHandPivot(nodes.dial, nodes.gmt_hand), [nodes.gmt_hand]),
+      hourHand: createLocalPartAt(displayAnchor, displayAnchor, [nodes.hour_hand]),
+      minuteHand: createLocalPartAt(displayAnchor, displayHandPivot(nodes.dial, nodes.minute_hand), [
+        nodes.minute_hand,
+      ]),
+    },
     train: {
       assembled: translateMeshPosition(nodes.center_wheel),
       centerWheel: createLocalPart(nodes.center_wheel, nodes.center_wheel, [nodes.center_wheel, nodes.center_pinion]),
@@ -146,6 +162,14 @@ function createPart(anchor: Mesh, nodes: readonly Mesh[]): WatchModelPart {
 function createLocalPart(parentAnchor: Mesh, pivot: Mesh, nodes: readonly Mesh[]): WatchModelLocalPart {
   const parentPosition = translateMeshPosition(parentAnchor)
   const pivotPosition = translateMeshPosition(pivot)
+  return createLocalPartAt(parentPosition, pivotPosition, nodes)
+}
+
+function createLocalPartAt(
+  parentPosition: WatchModelPoint,
+  pivotPosition: WatchModelPoint,
+  nodes: readonly Mesh[],
+): WatchModelLocalPart {
   return {
     content: createContent(pivotPosition, nodes),
     offset: [
@@ -154,6 +178,10 @@ function createLocalPart(parentAnchor: Mesh, pivot: Mesh, nodes: readonly Mesh[]
       pivotPosition[2] - parentPosition[2],
     ],
   }
+}
+
+function displayHandPivot(dial: Mesh, hand: Mesh): WatchModelPoint {
+  return translatePoint(dial.position.x, hand.position.y, dial.position.z)
 }
 
 function createContent(anchor: WatchModelPoint, nodes: readonly Mesh[]) {

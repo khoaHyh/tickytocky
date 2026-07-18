@@ -2,6 +2,7 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber"
 import { useEffect, useRef, type ReactNode, type RefObject } from "react"
 import { MathUtils, type Group } from "three"
 
+import type { DisplayLesson } from "./display-lesson"
 import type { EscapementLesson } from "./escapement-lesson"
 import type { PowerLesson } from "./power-lesson"
 import type { StoryProgress } from "./story-progress"
@@ -94,13 +95,16 @@ type MechanismTargets = Readonly<{
   escapeWheel: RefObject<Group | null>
   fourthWheel: RefObject<Group | null>
   hairspring: RefObject<Group | null>
+  hourHand: RefObject<Group | null>
   mainspring: RefObject<Group | null>
+  minuteHand: RefObject<Group | null>
   palletFork: RefObject<Group | null>
   thirdWheel: RefObject<Group | null>
 }>
 
 /** Renders the demand-driven Three.js watch scene for the lesson. */
 export function WatchScene(props: {
+  displayLesson: DisplayLesson
   lesson: EscapementLesson
   powerLesson: PowerLesson
   progress: StoryProgress
@@ -117,6 +121,7 @@ export function WatchScene(props: {
         gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }}
       >
         <Scene
+          displayLesson={props.displayLesson}
           lesson={props.lesson}
           powerLesson={props.powerLesson}
           progress={props.progress}
@@ -136,6 +141,7 @@ export function preloadWatchScene() {
 }
 
 function Scene(props: {
+  displayLesson: DisplayLesson
   lesson: EscapementLesson
   powerLesson: PowerLesson
   progress: StoryProgress
@@ -152,10 +158,13 @@ function Scene(props: {
   const centerWheel = useRef<Group>(null)
   const thirdWheel = useRef<Group>(null)
   const fourthWheel = useRef<Group>(null)
+  const hourHand = useRef<Group>(null)
+  const minuteHand = useRef<Group>(null)
   const invalidate = useThree((state) => state.invalidate)
   const width = useThree((state) => state.size.width)
 
   useEffect(() => props.progress.attachRenderer(invalidate), [invalidate, props.progress])
+  useEffect(() => props.displayLesson.attachRenderer(invalidate), [invalidate, props.displayLesson])
   useEffect(() => props.lesson.attachRenderer(invalidate), [invalidate, props.lesson])
   useEffect(() => props.powerLesson.attachRenderer(invalidate), [invalidate, props.powerLesson])
   useEffect(() => invalidate(), [invalidate, props.reducedMotion, width])
@@ -181,6 +190,7 @@ function Scene(props: {
 
     const mechanism = props.reducedMotion ? props.lesson.read() : props.lesson.tick(deltaSeconds)
     const power = props.reducedMotion ? props.powerLesson.read() : props.powerLesson.tick(deltaSeconds)
+    const display = props.reducedMotion ? props.displayLesson.read() : props.displayLesson.tick(deltaSeconds)
     const focus = lessonFocus(progress)
     const mechanismScale = 1 + focus.regulation * (compact ? 1.35 : 0.55)
     if (escapeWheel.current) {
@@ -219,8 +229,19 @@ function Scene(props: {
     if (fourthWheel.current) {
       fourthWheel.current.rotation.z = turnsToRadians(power.pose.fourthTurns)
     }
+    if (hourHand.current) {
+      hourHand.current.rotation.z = -turnsToRadians(display.pose.hourTurns)
+    }
+    if (minuteHand.current) {
+      minuteHand.current.rotation.z = -turnsToRadians(display.pose.minuteTurns)
+    }
 
-    if (!props.reducedMotion && (props.lesson.getSnapshot().playing || props.powerLesson.getSnapshot().playing))
+    if (
+      !props.reducedMotion &&
+      (props.displayLesson.getSnapshot().playing ||
+        props.lesson.getSnapshot().playing ||
+        props.powerLesson.getSnapshot().playing)
+    )
       invalidate()
   })
 
@@ -252,7 +273,9 @@ function Scene(props: {
                     escapeWheel,
                     fourthWheel,
                     hairspring,
+                    hourHand,
                     mainspring,
+                    minuteHand,
                     palletFork,
                     thirdWheel,
                   }}
@@ -310,7 +333,19 @@ function ModelPartContent(props: { id: PartID; model: WatchModelParts; targets: 
     case "dial":
       return props.model.dial.content
     case "hands":
-      return props.model.hands.content
+      return (
+        <>
+          <group ref={props.targets.hourHand} position={pointToPosition(props.model.hands.hourHand.offset)}>
+            {props.model.hands.hourHand.content}
+          </group>
+          <group ref={props.targets.minuteHand} position={pointToPosition(props.model.hands.minuteHand.offset)}>
+            {props.model.hands.minuteHand.content}
+          </group>
+          <group position={pointToPosition(props.model.hands.gmtHand.offset)}>
+            {props.model.hands.gmtHand.content}
+          </group>
+        </>
+      )
     case "train":
       return (
         <>

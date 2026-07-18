@@ -48,6 +48,12 @@ test("reduced motion keeps manual escapement stepping available", async ({ page 
   await page.emulateMedia({ reducedMotion: "reduce" })
   await page.goto("/")
 
+  const displayControls = page.getByTestId("display-controls")
+  await expect(displayControls.getByRole("button", { name: "Play hands" })).toBeDisabled()
+  await displayControls.getByRole("button", { name: "+10 min" }).click()
+  await expect(displayControls.locator("output strong")).toHaveText("Hands paused")
+  await expect(displayControls).toContainText("Elapsed display time 10 min")
+
   const controls = page.getByTestId("escapement-controls")
   await expect(controls.getByRole("button", { name: "Play cycle" })).toBeDisabled()
   await expect(controls.locator("output strong")).toHaveText("Entry lock")
@@ -68,6 +74,23 @@ test("reduced motion keeps manual escapement stepping available", async ({ page 
 
   await expect(powerControls.locator("output strong")).toHaveText("Train paused")
   await expect(powerControls).toContainText("Watch time 0:10")
+})
+
+test("the display hands advance and pause", async ({ page }) => {
+  await page.goto("/")
+
+  const controls = page.getByTestId("display-controls")
+  const elapsedTime = controls.getByText(/^Elapsed display time /)
+  await controls.getByRole("button", { name: "Play hands" }).click()
+
+  await expect(controls.locator("output strong")).toHaveText("Hands advancing")
+  await expect(elapsedTime).not.toHaveText("Elapsed display time 0 min")
+  await controls.getByRole("button", { name: "Pause hands" }).click()
+
+  const pausedTime = await elapsedTime.evaluate((element) => element.textContent ?? "")
+  await page.waitForTimeout(750)
+  await expect(elapsedTime).toHaveText(pausedTime)
+  await expect(controls.locator("output strong")).toHaveText("Hands paused")
 })
 
 test("the wound power train runs and pauses", async ({ page }) => {
