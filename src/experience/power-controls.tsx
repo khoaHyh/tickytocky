@@ -28,9 +28,9 @@ export function PowerControls(props: { lesson: PowerLesson; reducedMotion: boole
         <span>{guide.description}</span>
       </output>
 
-      <dl className="lesson-ratios">
+      <dl className="lesson-ratios mt-[0.9rem] grid grid-cols-3 gap-2">
         {powerRatioFacts.map((fact) => (
-          <div key={fact.label}>
+          <div className="min-w-0 pt-[0.55rem]" key={fact.label}>
             <dt>{fact.label}</dt>
             <dd>{fact.value}</dd>
           </div>

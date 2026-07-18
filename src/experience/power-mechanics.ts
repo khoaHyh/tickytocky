@@ -1,5 +1,8 @@
-const illustrativeReserveSeconds = 8 * 60 * 60
-const illustrativeArborTurns = 3
+import powerTrain from "../content/power-train.json"
+
+const barrelToCenterRatio = ratio(powerTrain.meshes.barrelToCenter)
+const centerToThirdRatio = ratio(powerTrain.meshes.centerToThird)
+const thirdToFourthRatio = ratio(powerTrain.meshes.thirdToFourth)
 
 /** Inputs to the generic, ratio-derived power-train model. */
 export type PowerTrainInput = Readonly<{
@@ -37,22 +40,28 @@ export function samplePowerTrain(input: PowerTrainInput): PowerTrainSample {
   }
 
   const initialWind = clamp(input.wind)
-  const availableSeconds = initialWind * illustrativeReserveSeconds
+  const availableSeconds = initialWind * powerTrain.reserveSecondsAtFullWind
   const elapsedSeconds = Math.min(Math.max(input.elapsedSeconds, 0), availableSeconds)
-  const centerTurns = elapsedSeconds === 0 ? 0 : -elapsedSeconds / (60 * 60)
-  const fourthTurns = elapsedSeconds === 0 ? 0 : -elapsedSeconds / 60
+  const barrelTurns = elapsedSeconds / powerTrain.reserveSecondsAtFullWind
+  const centerTurns = barrelTurns === 0 ? 0 : -barrelTurns * barrelToCenterRatio
+  const thirdTurns = centerTurns === 0 ? 0 : -centerTurns * centerToThirdRatio
+  const fourthTurns = thirdTurns === 0 ? 0 : -thirdTurns * thirdToFourthRatio
 
   return {
     elapsedSeconds,
     pose: {
-      barrelArborTurns: initialWind * illustrativeArborTurns,
-      barrelTurns: elapsedSeconds / illustrativeReserveSeconds,
+      barrelArborTurns: initialWind * powerTrain.arborTurnsAtFullWind,
+      barrelTurns,
       centerTurns,
       fourthTurns,
-      mainspringWind: Math.max(0, initialWind - elapsedSeconds / illustrativeReserveSeconds),
-      thirdTurns: elapsedSeconds / (7.5 * 60),
+      mainspringWind: Math.max(0, initialWind - barrelTurns),
+      thirdTurns,
     },
   }
+}
+
+function ratio(mesh: { pinionLeaves: number; wheelTeeth: number }) {
+  return mesh.wheelTeeth / mesh.pinionLeaves
 }
 
 function clamp(value: number) {

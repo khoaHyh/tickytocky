@@ -7,7 +7,8 @@ displays.
 The repository contains a self-authored, semantically named GLB watch model.
 Native page scroll deterministically separates and rebuilds the watch while
 semantic HTML explains each functional group. The regulation chapter includes a
-controllable generic Swiss lever lesson for lock, unlock, impulse, and drop.
+controllable generic Swiss lever lesson for lock, unlock, impulse, and drop. The
+power chapter traces energy from a windable mainspring through the going train.
 
 The current geometry is an educational tracer, not an exact NH34 reproduction.
 
@@ -16,7 +17,6 @@ The current geometry is an educational tracer, not an exact NH34 reproduction.
 - React and TypeScript
 - Vite with Rolldown and Oxc
 - Three.js, React Three Fiber, and Drei
-- Anime.js
 - Tailwind CSS
 - Oxlint and Oxfmt
 - Vitest and Playwright

@@ -47,19 +47,19 @@ const parts: readonly PartDefinition[] = [
   {
     id: "barrel",
     exploded: [0, 1.5, 1.25],
-    focus: [-0.65, 0.65, 2.1],
+    focus: [-0.41, 0.438, 2.1],
     focusGroup: "power",
     mobileExploded: [0, 1.35, 1.25],
-    mobileFocus: [-0.9, 3.8, 2.1],
+    mobileFocus: [-0.803, 3.8, 2.1],
     range: [0.25, 0.5],
   },
   {
     id: "train",
     exploded: [0, -1.25, 1.45],
-    focus: [0.65, -0.5, 2.1],
+    focus: [0.41, -0.288, 2.1],
     focusGroup: "power",
     mobileExploded: [0, -1.1, 1.45],
-    mobileFocus: [0.9, 3.8, 2.1],
+    mobileFocus: [0.803, 3.8, 2.1],
     range: [0.25, 0.5],
   },
   {
@@ -183,7 +183,6 @@ function Scene(props: {
     const power = props.reducedMotion ? props.powerLesson.read() : props.powerLesson.tick(deltaSeconds)
     const focus = lessonFocus(progress)
     const mechanismScale = 1 + focus.regulation * (compact ? 1.35 : 0.55)
-    const powerScale = 1 + focus.power * (compact ? 1.2 : 0.5)
     if (escapeWheel.current) {
       escapeWheel.current.rotation.z = -mechanism.pose.escapeWheelAdvance * escapeWheelToothPitch
       escapeWheel.current.scale.setScalar(mechanismScale)
@@ -203,27 +202,22 @@ function Scene(props: {
 
     if (barrelDrum.current) {
       barrelDrum.current.rotation.z = turnsToRadians(power.pose.barrelTurns)
-      barrelDrum.current.scale.setScalar(powerScale)
     }
     if (barrelArbor.current) {
       barrelArbor.current.rotation.z = turnsToRadians(power.pose.barrelArborTurns)
-      barrelArbor.current.scale.setScalar(powerScale)
     }
     if (mainspring.current) {
       const springScale = 1.15 - power.pose.mainspringWind * 0.25
-      mainspring.current.scale.set(springScale * powerScale, springScale * powerScale, powerScale)
+      mainspring.current.scale.set(springScale, springScale, 1)
     }
     if (centerWheel.current) {
       centerWheel.current.rotation.z = turnsToRadians(power.pose.centerTurns)
-      centerWheel.current.scale.setScalar(powerScale)
     }
     if (thirdWheel.current) {
       thirdWheel.current.rotation.z = turnsToRadians(power.pose.thirdTurns)
-      thirdWheel.current.scale.setScalar(powerScale)
     }
     if (fourthWheel.current) {
       fourthWheel.current.rotation.z = turnsToRadians(power.pose.fourthTurns)
-      fourthWheel.current.scale.setScalar(powerScale)
     }
 
     if (!props.reducedMotion && (props.lesson.getSnapshot().playing || props.powerLesson.getSnapshot().playing))
@@ -363,12 +357,13 @@ function AnimatedPart(props: {
     const partFocus = props.part.focusGroup ? focus[props.part.focusGroup] : 0
     const totalFocus = Math.max(focus.power, focus.regulation)
     const focusScale = 1 - totalFocus + partFocus
+    const detailScale = props.part.focusGroup === "power" ? 1 + partFocus * (props.compact ? 1.2 : 0.5) : 1
     target.position.set(
       MathUtils.lerp(base[0], focusTarget[0], partFocus),
       MathUtils.lerp(base[1], focusTarget[1], partFocus),
       MathUtils.lerp(base[2], focusTarget[2], partFocus),
     )
-    target.scale.setScalar(Math.max(0.001, focusScale))
+    target.scale.setScalar(Math.max(0.001, focusScale) * detailScale)
   })
 
   return <group ref={group}>{props.children}</group>

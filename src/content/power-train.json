@@ -1,0 +1,10 @@
+{
+  "arborTurnsAtFullWind": 3,
+  "reserveSecondsAtFullWind": 28800,
+  "meshes": {
+    "barrelToCenter": { "wheelTeeth": 96, "pinionLeaves": 12 },
+    "centerToThird": { "wheelTeeth": 80, "pinionLeaves": 10 },
+    "thirdToFourth": { "wheelTeeth": 75, "pinionLeaves": 10 },
+    "fourthToEscape": { "wheelTeeth": 96, "pinionLeaves": 6 }
+  }
+}

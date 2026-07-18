@@ -26,7 +26,7 @@ not measurements or reproductions of an NH34 movement.
 
 - Blender 4.5.9 LTS
 - glTF Transform 4.4.1 with Meshopt compression
-- Optimized asset SHA-256: `b674677e20bf39bc4926752315c4d7db99c4e2ad44c23ccd2536d3358aaf1864`
+- Optimized asset SHA-256: `2bb7814f6e6b4eae0f05b4f276baa925ecbcd403bad0ff63bc61cb1e19d85622`
 
 Two consecutive builds with this toolchain produced the same bytes. Other
 Blender patch versions may export different bytes and should be accepted only
