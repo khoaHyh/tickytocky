@@ -15,11 +15,18 @@ jewel are independently authored, generic educational forms. They communicate
 the relationships between escapement parts without claiming production
 dimensions or reproducing third-party geometry or artwork.
 
+The barrel, barrel arbor, mainspring, going-train wheels, and pinions are also
+independently authored, generic educational forms. The illustrative wheel tooth
+counts are 96, 80, 75, and 96 from barrel through fourth wheel; the pinion leaf
+counts are 12, 10, 10, and 6 from center through escape pinion. Their simplified
+profiles, spokes, proportions, and planar spring are original pipeline geometry,
+not measurements or reproductions of an NH34 movement.
+
 ## Validated toolchain
 
 - Blender 4.5.9 LTS
 - glTF Transform 4.4.1 with Meshopt compression
-- Optimized asset SHA-256: `080efb0a09e1d2fc389fc4407826479f41fb76ac8e52b6b2194d5fc98aac7b68`
+- Optimized asset SHA-256: `b674677e20bf39bc4926752315c4d7db99c4e2ad44c23ccd2536d3358aaf1864`
 
 Two consecutive builds with this toolchain produced the same bytes. Other
 Blender patch versions may export different bytes and should be accepted only

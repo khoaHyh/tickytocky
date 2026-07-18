@@ -18,3 +18,11 @@ The escapement slice is intentionally generic educational geometry rather than
 an NH34-dimensional reproduction. It includes a self-authored 15-tooth escape
 wheel, fork and separately identifiable pallet stones, plus a lightweight
 hairspring and impulse jewel at the balance assembly.
+
+The Power lesson uses equally generic, independently authored going-train
+geometry. Lightweight toothed forms illustrate a 96-tooth barrel, 80-tooth
+center wheel, 75-tooth third wheel, and 96-tooth fourth wheel. Their arbor
+assemblies include illustrative 12-, 10-, 10-, and 6-leaf pinions. A broad
+planar mainspring is visible inside the barrel around its centered arbor, and is
+deliberately distinct from the balance hairspring. These forms and counts teach
+power flow; they do not reproduce NH34 dimensions or production tooth profiles.

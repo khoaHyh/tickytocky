@@ -217,6 +217,185 @@ def add_radial_prism(
     )
 
 
+def centered_radial_outline(
+    outline: list[tuple[float, float]],
+) -> list[tuple[float, float]]:
+    """Center radial bounds so quantization preserves the mechanical axis."""
+    x_extent = max(max(x for x, _ in outline), -min(x for x, _ in outline))
+    y_extent = max(max(y for _, y in outline), -min(y for _, y in outline))
+    positive_x = max(x for x, _ in outline)
+    negative_x = -min(x for x, _ in outline)
+    positive_y = max(y for _, y in outline)
+    negative_y = -min(y for _, y in outline)
+    return [
+        (
+            x * x_extent / (positive_x if x >= 0 else negative_x),
+            y * y_extent / (positive_y if y >= 0 else negative_y),
+        )
+        for x, y in outline
+    ]
+
+
+def add_educational_wheel(
+    name: str,
+    *,
+    tooth_count: int,
+    tip_radius: float,
+    root_radius: float,
+    inner_radius: float,
+    hub_radius: float,
+    spoke_count: int,
+    spoke_width: float,
+    depth: float,
+    location: tuple[float, float, float],
+    material: bpy.types.Material,
+    root: bpy.types.Object,
+) -> bpy.types.Object:
+    """Add a lightweight toothed ring, hub, and optional educational spokes."""
+    sector = math.tau / tooth_count
+    outer_outline = centered_radial_outline(
+        [
+            (
+                radius * math.cos((tooth + phase) * sector),
+                radius * math.sin((tooth + phase) * sector),
+            )
+            for tooth in range(tooth_count)
+            for phase, radius in (
+                (0.0, root_radius),
+                (0.5, tip_radius),
+            )
+        ]
+    )
+    half_depth = depth / 2
+    vertices: list[tuple[float, float, float]] = []
+    faces: list[tuple[int, ...]] = []
+    for x, y in outer_outline:
+        radius = math.hypot(x, y)
+        inner_x = x * inner_radius / radius
+        inner_y = y * inner_radius / radius
+        vertices.extend(
+            [
+                (x, y, -half_depth),
+                (inner_x, inner_y, -half_depth),
+                (x, y, half_depth),
+                (inner_x, inner_y, half_depth),
+            ]
+        )
+    point_count = len(outer_outline)
+    for index in range(point_count):
+        next_index = (index + 1) % point_count
+        outer_bottom = index * 4
+        inner_bottom = outer_bottom + 1
+        outer_top = outer_bottom + 2
+        inner_top = outer_bottom + 3
+        next_outer_bottom = next_index * 4
+        next_inner_bottom = next_outer_bottom + 1
+        next_outer_top = next_outer_bottom + 2
+        next_inner_top = next_outer_bottom + 3
+        faces.extend(
+            [
+                (
+                    next_outer_bottom,
+                    outer_bottom,
+                    inner_bottom,
+                    next_inner_bottom,
+                ),
+                (outer_top, next_outer_top, next_inner_top, inner_top),
+                (outer_bottom, next_outer_bottom, next_outer_top, outer_top),
+                (next_inner_bottom, inner_bottom, inner_top, next_inner_top),
+            ]
+        )
+
+    outlines = [
+        [
+            (
+                hub_radius * math.cos(math.tau * index / 16),
+                hub_radius * math.sin(math.tau * index / 16),
+            )
+            for index in range(16)
+        ]
+    ]
+    spoke_length = inner_radius - hub_radius
+    for spoke in range(spoke_count):
+        angle = math.tau * spoke / spoke_count
+        center_radius = (hub_radius + inner_radius) / 2
+        outlines.append(
+            rectangle_outline(
+                center=(
+                    center_radius * math.cos(angle),
+                    center_radius * math.sin(angle),
+                ),
+                length=spoke_length * 1.08,
+                width=spoke_width,
+                angle=angle,
+            )
+        )
+    for outline in outlines:
+        base = len(vertices)
+        count = len(outline)
+        vertices.extend((x, y, -half_depth) for x, y in outline)
+        vertices.extend((x, y, half_depth) for x, y in outline)
+        faces.append(tuple(base + index for index in reversed(range(count))))
+        faces.append(tuple(base + count + index for index in range(count)))
+        for index in range(count):
+            next_index = (index + 1) % count
+            faces.append(
+                (
+                    base + index,
+                    base + next_index,
+                    base + count + next_index,
+                    base + count + index,
+                )
+            )
+    object_ = add_mesh(
+        name,
+        vertices=vertices,
+        faces=faces,
+        location=location,
+        material=material,
+        root=root,
+    )
+    for polygon in object_.data.polygons[: point_count * 4]:
+        polygon.use_smooth = polygon.index % 4 >= 2
+    return object_
+
+
+def add_pinion(
+    name: str,
+    *,
+    leaf_count: int,
+    tip_radius: float,
+    depth: float,
+    location: tuple[float, float, float],
+    material: bpy.types.Material,
+    root: bpy.types.Object,
+) -> bpy.types.Object:
+    """Add a simple leaf pinion centered on its wheel arbor."""
+    sector = math.tau / leaf_count
+    root_radius = tip_radius * 0.58
+    outline = [
+        (
+            radius * math.cos((leaf + phase) * sector),
+            radius * math.sin((leaf + phase) * sector),
+        )
+        for leaf in range(leaf_count)
+        for phase, radius in (
+            (0.0, root_radius),
+            (0.2, tip_radius),
+            (0.58, tip_radius),
+            (0.82, root_radius),
+        )
+    ]
+    return add_radial_prism(
+        name,
+        outline=outline,
+        depth=depth,
+        location=location,
+        material=material,
+        root=root,
+    )
+
+
 def add_escape_wheel(
     *,
     location: tuple[float, float, float],
@@ -432,6 +611,57 @@ def add_hairspring(
     )
 
 
+def add_mainspring(
+    *,
+    location: tuple[float, float, float],
+    material: bpy.types.Material,
+    root: bpy.types.Object,
+) -> bpy.types.Object:
+    """Add a broad planar spiral contained by the barrel's toothed rim."""
+    spiral_segment_count = 72
+    terminal_segment_count = 24
+    turn_count = 3.0
+    inner_radius = 0.00072
+    outer_radius = 0.00342
+    ribbon_width = 0.00016
+    center_points: list[tuple[float, float]] = []
+    for index in range(spiral_segment_count + 1):
+        progress = index / spiral_segment_count
+        center_points.append(
+            (
+                math.tau * turn_count * progress,
+                inner_radius + (outer_radius - inner_radius) * progress,
+            )
+        )
+    terminal_start = math.tau * turn_count
+    center_points.extend(
+        (terminal_start + math.tau * index / terminal_segment_count, outer_radius)
+        for index in range(1, terminal_segment_count + 1)
+    )
+
+    vertices = [
+        (
+            edge_radius * math.cos(angle),
+            edge_radius * math.sin(angle),
+            0.0,
+        )
+        for angle, radius in center_points
+        for edge_radius in (radius - ribbon_width / 2, radius + ribbon_width / 2)
+    ]
+    faces = [
+        (index * 2, index * 2 + 1, index * 2 + 3, index * 2 + 2)
+        for index in range(len(center_points) - 1)
+    ]
+    return add_mesh(
+        "mainspring",
+        vertices=vertices,
+        faces=faces,
+        location=location,
+        material=material,
+        root=root,
+    )
+
+
 def create_watch() -> tuple[bpy.types.Object, ...]:
     """Create the semantic watch parts in their assembled pose."""
     steel = create_material(
@@ -461,6 +691,12 @@ def create_watch() -> tuple[bpy.types.Object, ...]:
 
     root = bpy.data.objects.new("watch_root", None)
     bpy.context.collection.objects.link(root)
+
+    barrel_pivot = (-0.0048, 0.0036, -0.0014)
+    center_pivot = (0, 0, -0.0018)
+    third_pivot = (0.0041, 0.001, -0.00215)
+    fourth_pivot = (0.0062, -0.003, -0.0025)
+    escape_pivot = (0.0042, -0.0066, -0.00282)
 
     parts = [
         add_torus(
@@ -510,41 +746,115 @@ def create_watch() -> tuple[bpy.types.Object, ...]:
             material=accent,
             root=root,
         ),
-        add_cylinder(
+        add_educational_wheel(
             "barrel",
-            radius=0.0042,
+            tooth_count=96,
+            tip_radius=0.0042,
+            root_radius=0.00388,
+            inner_radius=0.00358,
+            hub_radius=0.0007,
+            spoke_count=0,
+            spoke_width=0,
             depth=0.00145,
-            location=(-0.0048, 0.0036, -0.0014),
+            location=barrel_pivot,
             material=steel,
             root=root,
         ),
         add_cylinder(
+            "barrel_arbor",
+            radius=0.00048,
+            depth=0.00215,
+            location=barrel_pivot,
+            material=brass,
+            root=root,
+            vertices=24,
+        ),
+        add_mainspring(
+            location=barrel_pivot,
+            material=steel,
+            root=root,
+        ),
+        add_educational_wheel(
             "center_wheel",
-            radius=0.00315,
+            tooth_count=80,
+            tip_radius=0.00315,
+            root_radius=0.00288,
+            inner_radius=0.00238,
+            hub_radius=0.00052,
+            spoke_count=5,
+            spoke_width=0.00024,
             depth=0.00048,
-            location=(0, 0, -0.0018),
+            location=center_pivot,
             material=brass,
             root=root,
         ),
-        add_cylinder(
+        add_pinion(
+            "center_pinion",
+            leaf_count=12,
+            tip_radius=0.00066,
+            depth=0.00078,
+            location=center_pivot,
+            material=steel,
+            root=root,
+        ),
+        add_educational_wheel(
             "third_wheel",
-            radius=0.00265,
+            tooth_count=75,
+            tip_radius=0.00265,
+            root_radius=0.00242,
+            inner_radius=0.00196,
+            hub_radius=0.00046,
+            spoke_count=5,
+            spoke_width=0.00021,
             depth=0.00045,
-            location=(0.0041, 0.001, -0.00215),
+            location=third_pivot,
             material=brass,
             root=root,
         ),
-        add_cylinder(
+        add_pinion(
+            "third_pinion",
+            leaf_count=10,
+            tip_radius=0.00057,
+            depth=0.00073,
+            location=third_pivot,
+            material=steel,
+            root=root,
+        ),
+        add_educational_wheel(
             "fourth_wheel",
-            radius=0.0023,
+            tooth_count=96,
+            tip_radius=0.0023,
+            root_radius=0.0021,
+            inner_radius=0.00168,
+            hub_radius=0.0004,
+            spoke_count=5,
+            spoke_width=0.00019,
             depth=0.00042,
-            location=(0.0062, -0.003, -0.0025),
+            location=fourth_pivot,
             material=brass,
+            root=root,
+        ),
+        add_pinion(
+            "fourth_pinion",
+            leaf_count=10,
+            tip_radius=0.0005,
+            depth=0.0007,
+            location=fourth_pivot,
+            material=steel,
             root=root,
         ),
         add_escape_wheel(
-            location=(0.0042, -0.0066, -0.00282),
+            location=escape_pivot,
             material=brass,
+            root=root,
+        ),
+        add_pinion(
+            "escape_pinion",
+            leaf_count=6,
+            tip_radius=0.00043,
+            depth=0.00062,
+            location=escape_pivot,
+            material=steel,
             root=root,
         ),
         add_pallet_fork(

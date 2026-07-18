@@ -57,4 +57,34 @@ test("reduced motion keeps manual escapement stepping available", async ({ page 
 
   await expect(controls.locator("output strong")).toHaveText("Entry unlock")
   await expect(controls.locator("output")).toContainText("Phase 2 of 8")
+
+  const powerControls = page.getByTestId("power-controls")
+  await expect(powerControls.getByRole("button", { name: "Run train" })).toBeDisabled()
+  await powerControls.getByRole("button", { name: "Wind spring" }).click()
+  await expect(powerControls.locator("output strong")).toHaveText("Energy stored")
+
+  await powerControls.getByRole("button", { name: "+10 sec" }).focus()
+  await page.keyboard.press("Enter")
+
+  await expect(powerControls.locator("output strong")).toHaveText("Train paused")
+  await expect(powerControls).toContainText("Watch time 0:10")
+})
+
+test("the wound power train runs and pauses", async ({ page }) => {
+  await page.goto("/")
+
+  const powerControls = page.getByTestId("power-controls")
+  const watchTime = powerControls.getByText(/^Watch time /)
+  await powerControls.getByRole("button", { name: "Wind spring" }).click()
+  await powerControls.getByRole("combobox", { name: "Study speed" }).selectOption("normal")
+  await powerControls.getByRole("button", { name: "Run train" }).click()
+
+  await expect(powerControls.locator("output strong")).toHaveText("Train running")
+  await expect(watchTime).not.toHaveText("Watch time 0:00")
+  await powerControls.getByRole("button", { name: "Pause train" }).click()
+
+  const pausedTime = await watchTime.evaluate((element) => element.textContent ?? "")
+  await page.waitForTimeout(750)
+  await expect(watchTime).toHaveText(pausedTime)
+  await expect(powerControls.locator("output strong")).toHaveText("Train paused")
 })

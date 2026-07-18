@@ -27,6 +27,14 @@ export type WatchModelBalancePart = Readonly<{
   wheel: WatchModelLocalPart
 }>
 
+/** The separately animated pieces inside the mainspring barrel assembly. */
+export type WatchModelBarrelPart = Readonly<{
+  arbor: WatchModelLocalPart
+  assembled: WatchModelPoint
+  drum: WatchModelLocalPart
+  mainspring: WatchModelLocalPart
+}>
+
 /** The separately animated pieces inside the escapement assembly group. */
 export type WatchModelEscapementPart = Readonly<{
   assembled: WatchModelPoint
@@ -34,34 +42,48 @@ export type WatchModelEscapementPart = Readonly<{
   palletFork: WatchModelLocalPart
 }>
 
+/** The rigid wheel-and-pinion pairs inside the going-train assembly. */
+export type WatchModelTrainPart = Readonly<{
+  assembled: WatchModelPoint
+  centerWheel: WatchModelLocalPart
+  fourthWheel: WatchModelLocalPart
+  thirdWheel: WatchModelLocalPart
+}>
+
 /** The movement groups exposed to the watch choreography. */
 export type WatchModelParts = Readonly<{
   balance: WatchModelBalancePart
-  barrel: WatchModelPart
+  barrel: WatchModelBarrelPart
   case: WatchModelPart
   dial: WatchModelPart
   escapement: WatchModelEscapementPart
   hands: WatchModelPart
-  train: WatchModelPart
+  train: WatchModelTrainPart
 }>
 
 type WatchModelNodes = Readonly<{
   balance_wheel: Mesh
   barrel: Mesh
+  barrel_arbor: Mesh
   case: Mesh
+  center_pinion: Mesh
   center_wheel: Mesh
   dial: Mesh
   entry_pallet_stone: Mesh
   escape_wheel: Mesh
+  escape_pinion: Mesh
   exit_pallet_stone: Mesh
   fourth_wheel: Mesh
+  fourth_pinion: Mesh
   gmt_hand: Mesh
   hairspring: Mesh
   hour_hand: Mesh
   impulse_jewel: Mesh
   minute_hand: Mesh
+  mainspring: Mesh
   pallet_fork: Mesh
   third_wheel: Mesh
+  third_pinion: Mesh
 }>
 
 /** Loads and translates the authored GLB into semantic, choreography-ready watch groups. */
@@ -85,12 +107,17 @@ export function translateWatchModelAsset(asset: unknown): WatchModelParts {
       hairspring: createLocalPart(nodes.balance_wheel, nodes.balance_wheel, [nodes.hairspring]),
       wheel: createLocalPart(nodes.balance_wheel, nodes.balance_wheel, [nodes.balance_wheel, nodes.impulse_jewel]),
     },
-    barrel: createPart(nodes.barrel, [nodes.barrel]),
+    barrel: {
+      arbor: createLocalPart(nodes.barrel, nodes.barrel_arbor, [nodes.barrel_arbor]),
+      assembled: translateMeshPosition(nodes.barrel),
+      drum: createLocalPart(nodes.barrel, nodes.barrel, [nodes.barrel]),
+      mainspring: createLocalPart(nodes.barrel, nodes.mainspring, [nodes.mainspring]),
+    },
     case: createPart(nodes.case, [nodes.case]),
     dial: createPart(nodes.dial, [nodes.dial]),
     escapement: {
       assembled: translateMeshPosition(nodes.escape_wheel),
-      escapeWheel: createLocalPart(nodes.escape_wheel, nodes.escape_wheel, [nodes.escape_wheel]),
+      escapeWheel: createLocalPart(nodes.escape_wheel, nodes.escape_wheel, [nodes.escape_wheel, nodes.escape_pinion]),
       palletFork: createLocalPart(nodes.escape_wheel, nodes.pallet_fork, [
         nodes.pallet_fork,
         nodes.entry_pallet_stone,
@@ -98,7 +125,12 @@ export function translateWatchModelAsset(asset: unknown): WatchModelParts {
       ]),
     },
     hands: createPart(nodes.hour_hand, [nodes.hour_hand, nodes.minute_hand, nodes.gmt_hand]),
-    train: createPart(nodes.center_wheel, [nodes.center_wheel, nodes.third_wheel, nodes.fourth_wheel]),
+    train: {
+      assembled: translateMeshPosition(nodes.center_wheel),
+      centerWheel: createLocalPart(nodes.center_wheel, nodes.center_wheel, [nodes.center_wheel, nodes.center_pinion]),
+      fourthWheel: createLocalPart(nodes.center_wheel, nodes.fourth_wheel, [nodes.fourth_wheel, nodes.fourth_pinion]),
+      thirdWheel: createLocalPart(nodes.center_wheel, nodes.third_wheel, [nodes.third_wheel, nodes.third_pinion]),
+    },
   }
 }
 
@@ -152,20 +184,26 @@ function parseWatchModel(asset: unknown): WatchModelNodes {
   return {
     balance_wheel: readMesh(asset.nodes, "balance_wheel"),
     barrel: readMesh(asset.nodes, "barrel"),
+    barrel_arbor: readMesh(asset.nodes, "barrel_arbor"),
     case: readMesh(asset.nodes, "case"),
+    center_pinion: readMesh(asset.nodes, "center_pinion"),
     center_wheel: readMesh(asset.nodes, "center_wheel"),
     dial: readMesh(asset.nodes, "dial"),
     entry_pallet_stone: readMesh(asset.nodes, "entry_pallet_stone"),
     escape_wheel: readMesh(asset.nodes, "escape_wheel"),
+    escape_pinion: readMesh(asset.nodes, "escape_pinion"),
     exit_pallet_stone: readMesh(asset.nodes, "exit_pallet_stone"),
     fourth_wheel: readMesh(asset.nodes, "fourth_wheel"),
+    fourth_pinion: readMesh(asset.nodes, "fourth_pinion"),
     gmt_hand: readMesh(asset.nodes, "gmt_hand"),
     hairspring: readMesh(asset.nodes, "hairspring"),
     hour_hand: readMesh(asset.nodes, "hour_hand"),
     impulse_jewel: readMesh(asset.nodes, "impulse_jewel"),
+    mainspring: readMesh(asset.nodes, "mainspring"),
     minute_hand: readMesh(asset.nodes, "minute_hand"),
     pallet_fork: readMesh(asset.nodes, "pallet_fork"),
     third_wheel: readMesh(asset.nodes, "third_wheel"),
+    third_pinion: readMesh(asset.nodes, "third_pinion"),
   }
 }
 

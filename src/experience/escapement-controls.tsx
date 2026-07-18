@@ -19,15 +19,15 @@ export function EscapementControls(props: { lesson: EscapementLesson; reducedMot
   }
 
   return (
-    <div className="escapement-controls" data-testid="escapement-controls">
-      <div className="escapement-phase-heading">
+    <div className="lesson-controls" data-testid="escapement-controls">
+      <div className="lesson-heading">
         <span>
           Phase {phaseIndex + 1} / {escapementPhaseStops.length}
         </span>
         <span>{guide.energy}</span>
       </div>
 
-      <output aria-atomic="true" aria-live={snapshot.playing ? "off" : "polite"} className="escapement-phase-output">
+      <output aria-atomic="true" aria-live={snapshot.playing ? "off" : "polite"} className="lesson-output">
         <span className="sr-only">
           Phase {phaseIndex + 1} of {escapementPhaseStops.length}. {guide.energy}.
         </span>
@@ -35,7 +35,7 @@ export function EscapementControls(props: { lesson: EscapementLesson; reducedMot
         <span>{guide.description}</span>
       </output>
 
-      <fieldset className="escapement-control-row">
+      <fieldset className="lesson-control-row">
         <legend className="sr-only">Escapement phase controls</legend>
         <button onClick={() => props.lesson.step(-1)} type="button">
           Previous
@@ -53,7 +53,7 @@ export function EscapementControls(props: { lesson: EscapementLesson; reducedMot
         </button>
       </fieldset>
 
-      <label className="escapement-rate">
+      <label className="lesson-rate">
         <span>Study speed</span>
         <select onChange={changeRate} value={snapshot.rate}>
           <option value="slow">Slow</option>
@@ -62,7 +62,7 @@ export function EscapementControls(props: { lesson: EscapementLesson; reducedMot
       </label>
 
       {props.reducedMotion ? (
-        <p className="escapement-motion-note">Auto-play is off. Previous and Next still work.</p>
+        <p className="lesson-motion-note">Auto-play is off. Previous and Next still work.</p>
       ) : null}
     </div>
   )

@@ -3,14 +3,17 @@ import { useEffect, useRef, type ReactNode, type RefObject } from "react"
 import { MathUtils, type Group } from "three"
 
 import type { EscapementLesson } from "./escapement-lesson"
+import type { PowerLesson } from "./power-lesson"
 import type { StoryProgress } from "./story-progress"
 import { preloadWatchModel, WatchModel, type WatchModelParts, type WatchModelPoint } from "./watch-model"
 
 type PartID = keyof WatchModelParts
+type FocusGroup = "power" | "regulation"
 type PartDefinition = {
   id: PartID
   exploded: WatchModelPoint
   focus: WatchModelPoint
+  focusGroup?: FocusGroup
   mobileExploded: WatchModelPoint
   mobileFocus: WatchModelPoint
   range: readonly [number, number]
@@ -44,23 +47,26 @@ const parts: readonly PartDefinition[] = [
   {
     id: "barrel",
     exploded: [0, 1.5, 1.25],
-    focus: [0, 5, -2],
+    focus: [-0.65, 0.65, 2.1],
+    focusGroup: "power",
     mobileExploded: [0, 1.35, 1.25],
-    mobileFocus: [5, 0, -2],
+    mobileFocus: [-0.9, 3.8, 2.1],
     range: [0.25, 0.5],
   },
   {
     id: "train",
     exploded: [0, -1.25, 1.45],
-    focus: [0, -5, -2],
+    focus: [0.65, -0.5, 2.1],
+    focusGroup: "power",
     mobileExploded: [0, -1.1, 1.45],
-    mobileFocus: [5, -4, -2],
+    mobileFocus: [0.9, 3.8, 2.1],
     range: [0.25, 0.5],
   },
   {
     id: "escapement",
     exploded: [2.2, 1.35, 1.65],
     focus: [0.4, 0.8, 2.1],
+    focusGroup: "regulation",
     mobileExploded: [2, 1.2, 1.65],
     mobileFocus: [-0.9, 3.8, 2.1],
     range: [0.5, 0.75],
@@ -69,6 +75,7 @@ const parts: readonly PartDefinition[] = [
     id: "balance",
     exploded: [2.2, -1.25, 1.9],
     focus: [0.4, -0.75, 2.1],
+    focusGroup: "regulation",
     mobileExploded: [2, -1.1, 1.9],
     mobileFocus: [0.9, 3.8, 2.1],
     range: [0.5, 0.75],
@@ -81,13 +88,24 @@ const balanceAmplitude = 0.58
 
 type MechanismTargets = Readonly<{
   balance: RefObject<Group | null>
+  barrelArbor: RefObject<Group | null>
+  barrelDrum: RefObject<Group | null>
+  centerWheel: RefObject<Group | null>
   escapeWheel: RefObject<Group | null>
+  fourthWheel: RefObject<Group | null>
   hairspring: RefObject<Group | null>
+  mainspring: RefObject<Group | null>
   palletFork: RefObject<Group | null>
+  thirdWheel: RefObject<Group | null>
 }>
 
 /** Renders the demand-driven Three.js watch scene for the lesson. */
-export function WatchScene(props: { lesson: EscapementLesson; progress: StoryProgress; reducedMotion: boolean }) {
+export function WatchScene(props: {
+  lesson: EscapementLesson
+  powerLesson: PowerLesson
+  progress: StoryProgress
+  reducedMotion: boolean
+}) {
   return (
     <figure aria-label="Exploded mechanical watch model" className="absolute inset-0 z-0" data-testid="watch-scene">
       <Canvas
@@ -98,7 +116,12 @@ export function WatchScene(props: { lesson: EscapementLesson; progress: StoryPro
         frameloop="demand"
         gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }}
       >
-        <Scene lesson={props.lesson} progress={props.progress} reducedMotion={props.reducedMotion} />
+        <Scene
+          lesson={props.lesson}
+          powerLesson={props.powerLesson}
+          progress={props.progress}
+          reducedMotion={props.reducedMotion}
+        />
       </Canvas>
       <figcaption className="sr-only">
         A mechanical watch separates into its display, power, and regulating parts.
@@ -112,17 +135,29 @@ export function preloadWatchScene() {
   preloadWatchModel()
 }
 
-function Scene(props: { lesson: EscapementLesson; progress: StoryProgress; reducedMotion: boolean }) {
+function Scene(props: {
+  lesson: EscapementLesson
+  powerLesson: PowerLesson
+  progress: StoryProgress
+  reducedMotion: boolean
+}) {
   const assembly = useRef<Group>(null)
   const escapeWheel = useRef<Group>(null)
   const palletFork = useRef<Group>(null)
   const balance = useRef<Group>(null)
   const hairspring = useRef<Group>(null)
+  const barrelArbor = useRef<Group>(null)
+  const barrelDrum = useRef<Group>(null)
+  const mainspring = useRef<Group>(null)
+  const centerWheel = useRef<Group>(null)
+  const thirdWheel = useRef<Group>(null)
+  const fourthWheel = useRef<Group>(null)
   const invalidate = useThree((state) => state.invalidate)
   const width = useThree((state) => state.size.width)
 
   useEffect(() => props.progress.attachRenderer(invalidate), [invalidate, props.progress])
   useEffect(() => props.lesson.attachRenderer(invalidate), [invalidate, props.lesson])
+  useEffect(() => props.powerLesson.attachRenderer(invalidate), [invalidate, props.powerLesson])
   useEffect(() => invalidate(), [invalidate, props.reducedMotion, width])
 
   useFrame(({ camera }, deltaSeconds) => {
@@ -145,7 +180,10 @@ function Scene(props: { lesson: EscapementLesson; progress: StoryProgress; reduc
     camera.lookAt(0, 0, 0)
 
     const mechanism = props.reducedMotion ? props.lesson.read() : props.lesson.tick(deltaSeconds)
-    const mechanismScale = 1 + lessonFocus(progress) * (compact ? 1.35 : 0.55)
+    const power = props.reducedMotion ? props.powerLesson.read() : props.powerLesson.tick(deltaSeconds)
+    const focus = lessonFocus(progress)
+    const mechanismScale = 1 + focus.regulation * (compact ? 1.35 : 0.55)
+    const powerScale = 1 + focus.power * (compact ? 1.2 : 0.5)
     if (escapeWheel.current) {
       escapeWheel.current.rotation.z = -mechanism.pose.escapeWheelAdvance * escapeWheelToothPitch
       escapeWheel.current.scale.setScalar(mechanismScale)
@@ -163,7 +201,33 @@ function Scene(props: { lesson: EscapementLesson; progress: StoryProgress; reduc
       hairspring.current.scale.set(breathing * mechanismScale, breathing * mechanismScale, mechanismScale)
     }
 
-    if (!props.reducedMotion && props.lesson.getSnapshot().playing) invalidate()
+    if (barrelDrum.current) {
+      barrelDrum.current.rotation.z = turnsToRadians(power.pose.barrelTurns)
+      barrelDrum.current.scale.setScalar(powerScale)
+    }
+    if (barrelArbor.current) {
+      barrelArbor.current.rotation.z = turnsToRadians(power.pose.barrelArborTurns)
+      barrelArbor.current.scale.setScalar(powerScale)
+    }
+    if (mainspring.current) {
+      const springScale = 1.15 - power.pose.mainspringWind * 0.25
+      mainspring.current.scale.set(springScale * powerScale, springScale * powerScale, powerScale)
+    }
+    if (centerWheel.current) {
+      centerWheel.current.rotation.z = turnsToRadians(power.pose.centerTurns)
+      centerWheel.current.scale.setScalar(powerScale)
+    }
+    if (thirdWheel.current) {
+      thirdWheel.current.rotation.z = turnsToRadians(power.pose.thirdTurns)
+      thirdWheel.current.scale.setScalar(powerScale)
+    }
+    if (fourthWheel.current) {
+      fourthWheel.current.rotation.z = turnsToRadians(power.pose.fourthTurns)
+      fourthWheel.current.scale.setScalar(powerScale)
+    }
+
+    if (!props.reducedMotion && (props.lesson.getSnapshot().playing || props.powerLesson.getSnapshot().playing))
+      invalidate()
   })
 
   return (
@@ -186,7 +250,18 @@ function Scene(props: { lesson: EscapementLesson; progress: StoryProgress; reduc
                 <ModelPartContent
                   id={part.id}
                   model={model}
-                  targets={{ balance, escapeWheel, hairspring, palletFork }}
+                  targets={{
+                    balance,
+                    barrelArbor,
+                    barrelDrum,
+                    centerWheel,
+                    escapeWheel,
+                    fourthWheel,
+                    hairspring,
+                    mainspring,
+                    palletFork,
+                    thirdWheel,
+                  }}
                 />
                 {part.id === "dial" ? <DialMarkers /> : null}
               </AnimatedPart>
@@ -223,7 +298,19 @@ function ModelPartContent(props: { id: PartID; model: WatchModelParts; targets: 
         </>
       )
     case "barrel":
-      return props.model.barrel.content
+      return (
+        <>
+          <group ref={props.targets.barrelDrum} position={pointToPosition(props.model.barrel.drum.offset)}>
+            {props.model.barrel.drum.content}
+          </group>
+          <group ref={props.targets.barrelArbor} position={pointToPosition(props.model.barrel.arbor.offset)}>
+            {props.model.barrel.arbor.content}
+          </group>
+          <group ref={props.targets.mainspring} position={pointToPosition(props.model.barrel.mainspring.offset)}>
+            {props.model.barrel.mainspring.content}
+          </group>
+        </>
+      )
     case "case":
       return props.model.case.content
     case "dial":
@@ -231,7 +318,19 @@ function ModelPartContent(props: { id: PartID; model: WatchModelParts; targets: 
     case "hands":
       return props.model.hands.content
     case "train":
-      return props.model.train.content
+      return (
+        <>
+          <group ref={props.targets.centerWheel} position={pointToPosition(props.model.train.centerWheel.offset)}>
+            {props.model.train.centerWheel.content}
+          </group>
+          <group ref={props.targets.thirdWheel} position={pointToPosition(props.model.train.thirdWheel.offset)}>
+            {props.model.train.thirdWheel.content}
+          </group>
+          <group ref={props.targets.fourthWheel} position={pointToPosition(props.model.train.fourthWheel.offset)}>
+            {props.model.train.fourthWheel.content}
+          </group>
+        </>
+      )
   }
 
   const exhaustive: never = props.id
@@ -261,11 +360,13 @@ function AnimatedPart(props: {
     ]
     const focusTarget = props.compact ? props.part.mobileFocus : props.part.focus
     const focus = lessonFocus(storyProgress)
-    const focusScale = isLessonPart(props.part.id) ? 1 : 1 - focus
+    const partFocus = props.part.focusGroup ? focus[props.part.focusGroup] : 0
+    const totalFocus = Math.max(focus.power, focus.regulation)
+    const focusScale = 1 - totalFocus + partFocus
     target.position.set(
-      MathUtils.lerp(base[0], focusTarget[0], focus),
-      MathUtils.lerp(base[1], focusTarget[1], focus),
-      MathUtils.lerp(base[2], focusTarget[2], focus),
+      MathUtils.lerp(base[0], focusTarget[0], partFocus),
+      MathUtils.lerp(base[1], focusTarget[1], partFocus),
+      MathUtils.lerp(base[2], focusTarget[2], partFocus),
     )
     target.scale.setScalar(Math.max(0.001, focusScale))
   })
@@ -297,17 +398,22 @@ function partProgress(progress: number, range: readonly [number, number]) {
 }
 
 function lessonFocus(progress: number) {
-  const fadeIn = partProgress(progress, [0.5, 0.7])
-  const fadeOut = 1 - partProgress(progress, [0.82, 1])
-  return Math.min(fadeIn, fadeOut)
-}
-
-function isLessonPart(id: PartID) {
-  return id === "balance" || id === "escapement"
+  const powerFadeIn = partProgress(progress, [0.25, 0.42])
+  const powerFadeOut = 1 - partProgress(progress, [0.54, 0.68])
+  const regulationFadeIn = partProgress(progress, [0.55, 0.7])
+  const regulationFadeOut = 1 - partProgress(progress, [0.82, 1])
+  return {
+    power: Math.min(powerFadeIn, powerFadeOut),
+    regulation: Math.min(regulationFadeIn, regulationFadeOut),
+  }
 }
 
 function pointToPosition(point: WatchModelPoint): [number, number, number] {
   return [point[0], point[1], point[2]]
+}
+
+function turnsToRadians(turns: number) {
+  return turns * Math.PI * 2
 }
 
 function sample(values: readonly number[], progress: number) {

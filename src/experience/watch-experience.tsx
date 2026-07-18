@@ -2,6 +2,8 @@ import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react"
 
 import { EscapementControls } from "./escapement-controls"
 import { createEscapementLesson } from "./escapement-lesson"
+import { PowerControls } from "./power-controls"
+import { createPowerLesson } from "./power-lesson"
 import {
   createStoryProgress,
   describeAssembly,
@@ -23,6 +25,7 @@ export function WatchExperience() {
   const status = useRef<HTMLOutputElement>(null)
   const progress = useMemo(() => createStoryProgress(), [])
   const lesson = useMemo(() => createEscapementLesson(), [])
+  const powerLesson = useMemo(() => createPowerLesson(), [])
   const [reducedMotion, setReducedMotion] = useState(false)
 
   useEffect(() => {
@@ -82,7 +85,7 @@ export function WatchExperience() {
         <Suspense
           fallback={<p className="grid h-full place-items-center font-mono text-xs text-muted">Loading movement…</p>}
         >
-          <WatchScene lesson={lesson} progress={progress} reducedMotion={reducedMotion} />
+          <WatchScene lesson={lesson} powerLesson={powerLesson} progress={progress} reducedMotion={reducedMotion} />
         </Suspense>
 
         <div aria-hidden="true" className="part-label-layer hidden lg:block">
@@ -144,17 +147,18 @@ export function WatchExperience() {
         </section>
 
         <section className="story-chapter items-end md:items-center">
-          <div className="story-copy mr-auto md:max-w-md">
+          <div className="lesson-story-copy story-copy mr-auto md:max-w-md">
             <p className="story-kicker">02 / Power</p>
             <h2 className="story-title">Stored, then released</h2>
             <p className="story-body">
               The barrel stores energy in the mainspring. The gear train carries that energy toward the escapement.
             </p>
+            <PowerControls lesson={powerLesson} reducedMotion={reducedMotion} />
           </div>
         </section>
 
         <section className="story-chapter items-start md:items-center">
-          <div className="escapement-story-copy story-copy ml-auto md:max-w-md">
+          <div className="lesson-story-copy story-copy ml-auto md:max-w-md">
             <p className="story-kicker">03 / Regulation</p>
             <h2 className="story-title">A controlled escape</h2>
             <p className="story-body">

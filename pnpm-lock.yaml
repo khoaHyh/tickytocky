@@ -14,9 +14,6 @@ importers:
       '@react-three/fiber':
         specifier: 9.6.1
         version: 9.6.1(@types/react@19.2.17)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(three@0.185.1)
-      animejs:
-        specifier: 4.5.0
-        version: 4.5.0(@types/three@0.185.1)(three@0.185.1)
       react:
         specifier: 19.2.7
         version: 19.2.7
@@ -1088,17 +1085,6 @@ packages:
 
   ajv@6.15.0:
     resolution: {integrity: sha512-fgFx7Hfoq60ytK2c7DhnF8jIvzYgOMxfugjLOSMHjLIPgenqa7S7oaagATUq99mV6IYvN2tRmC0wnTYX6iPbMw==}
-
-  animejs@4.5.0:
-    resolution: {integrity: sha512-NQimYX+lz8WaXonGS9zVVoviCIAjONeJayxacUditaivYLqyXgGjFKjuyl0aUUhFKm5MriX9ty1TGovNzoJQWA==}
-    peerDependencies:
-      '@types/three': '>=0.150.0'
-      three: '>=0.150.0'
-    peerDependenciesMeta:
-      '@types/three':
-        optional: true
-      three:
-        optional: true
 
   ansi-escapes@7.3.0:
     resolution: {integrity: sha512-BvU8nYgGQBxcmMuEeUEmNTvrMVjJNSH7RgW24vXexN4Ven6qCvy4TntnvlnwnMLTVlcRQQdbRY8NKnaIoeWDNg==}
@@ -2960,11 +2946,6 @@ snapshots:
       fast-json-stable-stringify: 2.1.0
       json-schema-traverse: 0.4.1
       uri-js: 4.4.1
-
-  animejs@4.5.0(@types/three@0.185.1)(three@0.185.1):
-    optionalDependencies:
-      '@types/three': 0.185.1
-      three: 0.185.1
 
   ansi-escapes@7.3.0:
     dependencies:
