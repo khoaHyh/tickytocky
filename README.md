@@ -58,8 +58,9 @@ pnpm check
 pnpm test:e2e
 ```
 
-`pnpm check` verifies formatting, lint rules, TypeScript, unit tests, and the
-production build. Playwright separately verifies the rendered browser seam.
+`pnpm check` verifies formatting, lint rules, TypeScript, the Python generator
+contract, unit tests, and the production build. Playwright separately verifies
+the rendered browser seam.
 
 ## Deployment
 

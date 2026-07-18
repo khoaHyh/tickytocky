@@ -2,7 +2,7 @@
 
 import { readFile } from "node:fs/promises"
 
-import { Box3, Mesh, Vector3 } from "three"
+import { Mesh, Vector3 } from "three"
 import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js"
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js"
 import { describe, expect, test } from "vitest"
@@ -66,17 +66,15 @@ describe("watch model asset", () => {
       const wheelPosition = wheel.getWorldPosition(new Vector3())
       const pinionPosition = pinion.getWorldPosition(new Vector3())
       const centerDistance = Math.hypot(wheelPosition.x - pinionPosition.x, wheelPosition.z - pinionPosition.z)
-      const tipRadiusSum = faceRadius(wheel) + faceRadius(pinion)
+      const pitchRadiusSum = pitchRadius(wheel) + pitchRadius(pinion)
 
-      expect(centerDistance, `${wheelName} must not overlap ${pinionName} excessively`).toBeGreaterThan(
-        tipRadiusSum * 0.9,
-      )
-      expect(centerDistance, `${wheelName} must reach ${pinionName}`).toBeLessThan(tipRadiusSum)
+      expect(centerDistance, `${wheelName} must mesh with ${pinionName}`).toBeCloseTo(pitchRadiusSum, 6)
     }
   })
 })
 
-function faceRadius(mesh: Mesh) {
-  const size = new Box3().setFromObject(mesh).getSize(new Vector3())
-  return Math.max(size.x, size.z) / 2
+function pitchRadius(mesh: Mesh) {
+  const value: unknown = mesh.userData.pitch_radius
+  if (typeof value === "number" && Number.isFinite(value) && value > 0) return value
+  throw new Error(`Expected ${mesh.name} to provide a positive pitch radius.`)
 }

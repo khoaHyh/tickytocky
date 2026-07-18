@@ -1,5 +1,5 @@
 import type { PowerLessonStatus } from "../experience/power-lesson"
-import powerTrain from "./power-train.json"
+import { powerTrain, powerTrainRatio } from "./power-train-contract"
 
 /** Human-readable teaching copy for one power-lesson state. */
 export type PowerStatusGuide = Readonly<{
@@ -29,19 +29,17 @@ export const powerStatusGuides: Readonly<Record<PowerLessonStatus, PowerStatusGu
 
 /** The generic worked ratios displayed beside the power controls. */
 const reserveHours = powerTrain.reserveSecondsAtFullWind / (60 * 60)
-const centerHoursPerTurn = reserveHours / ratio(powerTrain.meshes.barrelToCenter)
+const centerHoursPerTurn = reserveHours / powerTrainRatio(powerTrain.meshes.barrelToCenter)
 const fourthMinutesPerTurn =
-  (centerHoursPerTurn * 60) / ratio(powerTrain.meshes.centerToThird) / ratio(powerTrain.meshes.thirdToFourth)
+  (centerHoursPerTurn * 60) /
+  powerTrainRatio(powerTrain.meshes.centerToThird) /
+  powerTrainRatio(powerTrain.meshes.thirdToFourth)
 
 export const powerRatioFacts = [
   { label: "Barrel", value: `1 turn / ${formatPeriod(reserveHours, "h")}` },
   { label: "Center", value: `1 turn / ${formatPeriod(centerHoursPerTurn, "h")}` },
   { label: "Fourth", value: `1 turn / ${formatPeriod(fourthMinutesPerTurn, "min")}` },
 ] as const
-
-function ratio(mesh: { pinionLeaves: number; wheelTeeth: number }) {
-  return mesh.wheelTeeth / mesh.pinionLeaves
-}
 
 function formatPeriod(value: number, unit: string) {
   return value === 1 ? unit : `${value} ${unit}`

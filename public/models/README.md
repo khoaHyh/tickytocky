@@ -26,3 +26,5 @@ assemblies include illustrative 12-, 10-, 10-, and 6-leaf pinions. A broad
 planar mainspring is visible inside the barrel around its centered arbor, and is
 deliberately distinct from the balance hairspring. These forms and counts teach
 power flow; they do not reproduce NH34 dimensions or production tooth profiles.
+The executable counts live in `src/content/power-train.json`; both the lesson and
+Blender generator parse that contract before deriving ratios or pitch circles.

@@ -6,7 +6,7 @@
   "scripts": {
     "asset:watch": "sh tools/blender/build-watch-model.sh",
     "build": "tsc -b && vite build",
-    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test:unit && pnpm build",
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test:python && pnpm test:unit && pnpm build",
     "dev": "vite",
     "format": "oxfmt .",
     "format:check": "oxfmt --check .",
@@ -15,6 +15,7 @@
     "test": "pnpm test:unit && pnpm test:e2e",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
+    "test:python": "python3 -m unittest discover -s tools/blender -p '*_test.py'",
     "test:unit": "vitest run src --passWithNoTests",
     "typecheck": "tsc -b"
   },

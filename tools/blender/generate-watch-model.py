@@ -358,6 +358,7 @@ def add_educational_wheel(
         material=material,
         root=root,
     )
+    object_["pitch_radius"] = power_train.pitch_radius(tip_radius, root_radius)
     for polygon in object_.data.polygons[: point_count * 4]:
         polygon.use_smooth = polygon.index % 4 >= 2
     return object_
@@ -389,7 +390,7 @@ def add_pinion(
             (0.82, root_radius),
         )
     ]
-    return add_radial_prism(
+    object_ = add_radial_prism(
         name,
         outline=outline,
         depth=depth,
@@ -397,6 +398,8 @@ def add_pinion(
         material=material,
         root=root,
     )
+    object_["pitch_radius"] = power_train.pitch_radius(tip_radius, root_radius)
+    return object_
 
 
 def add_escape_wheel(
@@ -916,6 +919,7 @@ def export_model(output_path: Path) -> None:
         export_cameras=False,
         export_lights=False,
         export_materials="EXPORT",
+        export_extras=True,
     )
 
 
