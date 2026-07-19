@@ -1,5 +1,12 @@
 import { expect, test } from "@playwright/test"
 
+test("serves the built production application", async ({ request }) => {
+  const response = await request.get("/")
+
+  expect(response.ok()).toBe(true)
+  expect(await response.text()).not.toContain("/@vite/client")
+})
+
 test("introduces the mechanical watch guide", async ({ page }) => {
   const consoleErrors: string[] = []
   page.on("console", (message) => {
@@ -17,6 +24,19 @@ test("introduces the mechanical watch guide", async ({ page }) => {
   await expect(page.getByText("An interactive guide to mechanical watches.")).toBeVisible()
   await expect(page.getByTestId("watch-scene")).toBeVisible()
   expect(consoleErrors).toEqual([])
+})
+
+test("keeps the semantic lessons available when the watch model fails", async ({ page }) => {
+  await page.route("**/models/watch-model.glb", (route) => route.abort("failed"))
+  await page.goto("/")
+
+  await expect(page.getByText("3D view unavailable.")).toBeVisible()
+  await expect(page.getByRole("button", { name: "Retry 3D view" })).toBeVisible()
+  await expect(page.getByRole("heading", { level: 1, name: "TickyTocky" })).toBeAttached()
+  await expect(page.getByTestId("display-controls")).toBeAttached()
+  await expect(page.getByTestId("power-controls")).toBeAttached()
+  await expect(page.getByTestId("escapement-controls")).toBeAttached()
+  await expect(page.getByTestId("system-controls")).toBeAttached()
 })
 
 test("scrolling explodes and rebuilds the watch", async ({ page }) => {

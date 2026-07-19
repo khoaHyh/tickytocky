@@ -62,11 +62,14 @@ pnpm test:e2e
 ```
 
 `pnpm check` verifies formatting, lint rules, TypeScript, the Python generator
-contract, unit tests, and the production build. Playwright separately verifies
-the rendered browser seam.
+contract, unit tests, and the production build. Playwright rebuilds the app,
+serves `dist` through Vite Preview, and verifies the production browser seam.
+
+The same commands run in CI for pushes to `main` and pull requests.
 
 ## Deployment
 
-The production output is a static `dist` directory suitable for Cloudflare
-Pages. Large 3D assets will move to Cloudflare R2 if they exceed the Pages
-per-file limit.
+Run `pnpm build` and publish the resulting static `dist` directory. The host must
+serve `index.html` at the site root and preserve the generated
+`/models/watch-model.glb` path. No server runtime or provider-specific integration
+is required.

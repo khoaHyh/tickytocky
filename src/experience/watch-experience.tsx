@@ -6,6 +6,7 @@ import { EscapementControls } from "./escapement-controls"
 import { createEscapementLesson } from "./escapement-lesson"
 import { PowerControls } from "./power-controls"
 import { createPowerLesson } from "./power-lesson"
+import { SceneErrorBoundary } from "./scene-error-boundary"
 import {
   createStoryProgress,
   describeAssembly,
@@ -91,18 +92,20 @@ export function WatchExperience() {
       <div className="sticky top-0 h-dvh overflow-hidden">
         <div aria-hidden="true" className="movement-grid absolute inset-0" />
         <div aria-hidden="true" className="movement-glow absolute" />
-        <Suspense
-          fallback={<p className="grid h-full place-items-center font-mono text-xs text-muted">Loading movement…</p>}
-        >
-          <WatchScene
-            displayLesson={displayLesson}
-            lesson={lesson}
-            powerLesson={powerLesson}
-            progress={progress}
-            reducedMotion={reducedMotion}
-            systemLesson={systemLesson}
-          />
-        </Suspense>
+        <SceneErrorBoundary fallback={<SceneUnavailable />}>
+          <Suspense
+            fallback={<p className="grid h-full place-items-center font-mono text-xs text-muted">Loading movement…</p>}
+          >
+            <WatchScene
+              displayLesson={displayLesson}
+              lesson={lesson}
+              powerLesson={powerLesson}
+              progress={progress}
+              reducedMotion={reducedMotion}
+              systemLesson={systemLesson}
+            />
+          </Suspense>
+        </SceneErrorBoundary>
 
         <div aria-hidden="true" className="part-label-layer hidden lg:block">
           <span className="part-label part-label-display">Dial + hands</span>
@@ -197,5 +200,23 @@ export function WatchExperience() {
         </section>
       </div>
     </main>
+  )
+}
+
+function SceneUnavailable() {
+  return (
+    <div className="absolute inset-0 z-10 grid place-items-center px-8 text-center">
+      <div className="max-w-sm border border-line bg-canvas/95 p-6">
+        <p className="font-display text-2xl font-semibold">3D view unavailable.</p>
+        <p className="mt-2 text-sm leading-6 text-muted">The written lessons and controls remain available below.</p>
+        <button
+          className="mt-5 min-h-11 border border-line px-4 font-mono text-xs tracking-[0.12em] uppercase hover:border-accent hover:text-accent-text focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-accent"
+          onClick={() => window.location.reload()}
+          type="button"
+        >
+          Retry 3D view
+        </button>
+      </div>
+    </div>
   )
 }
