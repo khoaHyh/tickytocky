@@ -6,7 +6,7 @@
   "scripts": {
     "asset:watch": "sh tools/blender/build-watch-model.sh",
     "build": "tsc -b && vite build",
-    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test:python && pnpm test:unit && pnpm build",
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test:python && pnpm test:unit && pnpm test:workflow && pnpm build",
     "dev": "vite",
     "format": "oxfmt .",
     "format:check": "oxfmt --check .",
@@ -17,6 +17,7 @@
     "test:e2e:ui": "playwright test --ui",
     "test:python": "python3 -m unittest discover -s tools/blender -p '*_test.py'",
     "test:unit": "vitest run src --passWithNoTests",
+    "test:workflow": "vitest run tests/workflow.test.ts",
     "typecheck": "tsc -b"
   },
   "dependencies": {
@@ -42,7 +43,9 @@
     "tailwindcss": "4.3.2",
     "typescript": "7.0.2",
     "vite": "8.1.4",
-    "vitest": "4.1.10"
+    "vitest": "4.1.10",
+    "wrangler": "4.112.0",
+    "yaml": "2.9.0"
   },
   "engines": {
     "node": ">=24.0.0 <25"

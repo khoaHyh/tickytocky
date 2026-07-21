@@ -72,7 +72,25 @@ The same commands run in CI for pushes to `main` and pull requests.
 
 ## Deployment
 
-Run `pnpm build` and publish the resulting static `dist` directory. The host must
-serve `index.html` at the site root and preserve the generated
-`/models/watch-model.glb` path. No server runtime or provider-specific integration
-is required.
+`pnpm build` creates the complete static deployment artifact in `dist/`, including
+the generated `/models/watch-model.glb` path.
+
+The production flow is:
+
+```text
+verified main commit → Vite static build → Cloudflare Pages Direct Upload → tickytocky.pages.dev
+```
+
+`.github/workflows/deploy.yml` runs the complete verification suite for pull
+requests and pushes. A verified `main` build is uploaded with Wrangler; pull
+requests never receive deployment credentials.
+
+Configure a Direct Upload Pages project with production branch `main` and these
+GitHub repository settings:
+
+- secret `CLOUDFLARE_API_TOKEN` with only Account → Cloudflare Pages → Edit permission
+- variable `CLOUDFLARE_ACCOUNT_ID`
+- variable `CLOUDFLARE_PAGES_PROJECT`
+
+Do not connect the Pages project to Cloudflare's Git integration because GitHub
+Actions owns deployment.
