@@ -108,9 +108,13 @@ test("the display hands advance and pause", async ({ page }) => {
 
   const controls = page.getByTestId("display-controls")
   const elapsedTime = controls.getByText(/^Elapsed display time /)
+  const output = controls.locator("output")
+  await expect(output).toHaveAttribute("aria-atomic", "true")
+  await expect(output).toHaveAttribute("aria-live", "polite")
   await controls.getByRole("button", { name: "Play hands" }).click()
 
   await expect(controls.locator("output strong")).toHaveText("Hands advancing")
+  await expect(output).toHaveAttribute("aria-live", "off")
   await expect(elapsedTime).not.toHaveText("Elapsed display time 0 min", { timeout: 15_000 })
   await controls.getByRole("button", { name: "Pause hands" }).click()
 
@@ -118,6 +122,7 @@ test("the display hands advance and pause", async ({ page }) => {
   await page.waitForTimeout(750)
   await expect(elapsedTime).toHaveText(pausedTime)
   await expect(controls.locator("output strong")).toHaveText("Hands paused")
+  await expect(output).toHaveAttribute("aria-live", "polite")
 })
 
 test("the wound power train runs and pauses", async ({ page }) => {

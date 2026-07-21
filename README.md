@@ -63,7 +63,9 @@ pnpm test:e2e
 
 `pnpm check` verifies formatting, lint rules, TypeScript, the Python generator
 contract, unit tests, and the production build. Playwright rebuilds the app,
-serves `dist` through Vite Preview, and verifies the production browser seam.
+serves `dist` through Vite Preview, and verifies the production browser seam on
+desktop and 320×568 touch Chromium. The browser suite also checks a WCAG A/AA
+baseline, keyboard focus, live-region behavior, and scene-failure recovery.
 
 The same commands run in CI for pushes to `main` and pull requests.
 
