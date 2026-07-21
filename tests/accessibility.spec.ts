@@ -10,11 +10,11 @@ test("meets the automated WCAG accessibility baseline", async ({ page }) => {
   expect(results.violations).toEqual([])
 })
 
-test("shows a visible focus indicator during keyboard navigation", async ({ page }) => {
+test("shows a visible focus indicator during keyboard navigation", async ({ browserName, page }) => {
   await page.goto("/")
   await expect(page.getByText("Loading movement…")).toBeHidden()
 
-  await page.keyboard.press("Tab")
+  await page.keyboard.press(browserName === "webkit" ? "Alt+Tab" : "Tab")
 
   const firstControl = page.getByRole("button", { name: "Reset" })
   await expect(firstControl).toBeFocused()
